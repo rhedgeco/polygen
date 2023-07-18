@@ -1,5 +1,4 @@
-use proc_macro::TokenStream;
-use quote::quote_spanned;
+use quote::{__private::TokenStream, quote_spanned};
 use syn::ItemStruct;
 
 pub fn polystruct(item: ItemStruct) -> TokenStream {
@@ -17,5 +16,4 @@ pub fn polystruct(item: ItemStruct) -> TokenStream {
             }
         };
     }
-    .into()
 }

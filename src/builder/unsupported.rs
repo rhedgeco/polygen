@@ -1,5 +1,4 @@
-use proc_macro::TokenStream;
-use quote::quote;
+use quote::{__private::TokenStream, quote};
 use syn::Item;
 
 pub fn unsupported(item: Item) -> TokenStream {
@@ -7,5 +6,4 @@ pub fn unsupported(item: Item) -> TokenStream {
         compile_error!("Unsupported polygen item");
         #item
     }
-    .into()
 }
