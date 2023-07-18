@@ -1,11 +1,11 @@
 mod builder;
-mod scripting;
+mod engine;
 
 extern crate proc_macro;
+use engine::PolygenEngine;
 use once_cell::sync::Lazy;
 use proc_macro::TokenStream;
 use quote::quote;
-use scripting::PolygenEngine;
 use std::{fs, path::PathBuf};
 use syn_serde::Syn;
 

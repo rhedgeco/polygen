@@ -2,6 +2,40 @@ use rhai::{serde::to_dynamic, Engine, Scope, AST};
 use std::{fs, io, path::PathBuf};
 use thiserror::Error;
 
+struct PolyScript {
+    name: String,
+    ast: AST,
+}
+
+struct PolyLog {
+    log: String,
+}
+
+impl PolyLog {
+    pub fn new() -> Self {
+        Self { log: String::new() }
+    }
+
+    pub fn log(&mut self, text: &str) {
+        self.log += &format!("[LOG]: {text}\n");
+    }
+
+    pub fn error(&mut self, text: &str) {
+        self.log += &format!("[ERROR]: {text}\n");
+    }
+
+    pub fn full_text(&self) -> &str {
+        &self.log
+    }
+}
+
+#[derive(Debug, Error)]
+#[error("'{name}' - {error}")]
+pub struct ValidationError {
+    name: String,
+    error: Box<rhai::EvalAltResult>,
+}
+
 pub struct PolygenEngine {
     engine: Engine,
     scripts: Vec<PolyScript>,
@@ -85,39 +119,5 @@ impl PolygenEngine {
     pub fn flush_logs(&self, log_path: PathBuf) -> io::Result<()> {
         let logs = self.log.full_text();
         fs::write(log_path, logs)
-    }
-}
-
-#[derive(Debug, Error)]
-#[error("'{name}' - {error}")]
-pub struct ValidationError {
-    name: String,
-    error: Box<rhai::EvalAltResult>,
-}
-
-pub struct PolyScript {
-    name: String,
-    ast: AST,
-}
-
-pub struct PolyLog {
-    log: String,
-}
-
-impl PolyLog {
-    pub fn new() -> Self {
-        Self { log: String::new() }
-    }
-
-    pub fn log(&mut self, text: &str) {
-        self.log += &format!("[LOG]: {text}\n");
-    }
-
-    pub fn error(&mut self, text: &str) {
-        self.log += &format!("[ERROR]: {text}\n");
-    }
-
-    pub fn full_text(&self) -> &str {
-        &self.log
     }
 }
