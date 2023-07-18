@@ -16,8 +16,8 @@ impl PolyLog {
         Self { log: String::new() }
     }
 
-    pub fn log(&mut self, text: &str) {
-        self.log += &format!("[LOG]: {text}\n");
+    pub fn info(&mut self, text: &str) {
+        self.log += &format!("[INFO]: {text}\n");
     }
 
     pub fn error(&mut self, text: &str) {
@@ -52,7 +52,7 @@ impl PolygenEngine {
 
         let dir = PathBuf::from(script_dir);
         poly.log
-            .log(&format!("Loading scripts from '{}'", script_dir));
+            .info(&format!("Loading scripts from '{}'", script_dir));
         let read_dir = match fs::read_dir(dir) {
             Ok(read_dir) => read_dir,
             Err(e) => {
@@ -81,10 +81,10 @@ impl PolygenEngine {
                 .map_or("untitled".to_string(), |s| s.to_string_lossy().to_string());
 
             let path_string = path.to_string_lossy().to_string();
-            poly.log.log(&format!("Found file '{path_string}'"));
+            poly.log.info(&format!("Found file '{path_string}'"));
 
             if path.extension().map(|s| s == "rhai").unwrap_or(false) {
-                poly.log.log(&format!("Loading rhai script '{name}'"));
+                poly.log.info(&format!("Loading rhai script '{name}'"));
                 match poly.engine.compile_file(path) {
                     Ok(ast) => poly.scripts.push(PolyScript { name, ast }),
                     Err(e) => {
