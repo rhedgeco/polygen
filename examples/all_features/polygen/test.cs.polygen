@@ -1,0 +1,11 @@
+{%- import "csharp.macros" as macros -%}
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace RustNative
+{
+    {%- for struct in structs %}
+    {{ macros::parseStruct(struct=struct) }}
+    {%- endfor -%}
+}
