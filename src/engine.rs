@@ -47,6 +47,7 @@ impl PolygenEngine {
         // register custom functions
         poly.engine
             .register_fn("indent", functions::indent)
+            .register_fn("replace", functions::replace)
             .register_fn("as_camel_case", functions::as_camel_case)
             .register_fn("as_pascal_case", functions::as_pascal_case)
             .register_fn("as_snake_case", functions::as_snake_case)
@@ -54,7 +55,8 @@ impl PolygenEngine {
             .register_fn("as_kebab_case", functions::as_kebab_case)
             .register_fn("as_capital_kebab_case", functions::as_capital_kebab_case)
             .register_fn("as_train_case", functions::as_train_case)
-            .register_fn("as_title_case", functions::as_title_case);
+            .register_fn("as_title_case", functions::as_title_case)
+            .register_fn("docformat", functions::docformat);
 
         // set up module resolvers for engine
         let dir = PathBuf::from(script_dir);
