@@ -20,7 +20,7 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // validate item with scripting engine
     let new_engine = once_cell::sync::Lazy::<PolygenEngine>::get(&ENGINE).is_none();
-    let validation = match ENGINE.process_item(item.to_adapter()) {
+    let process_error = match ENGINE.process_item(item.to_adapter()) {
         Ok(_) => quote!(),
         Err(e) => {
             let message = e.to_string();
@@ -36,12 +36,18 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     // flush bindings if necessary
-    if env::var("NO_POLYGEN_BINDINGS") != Ok("1".to_string()) {
+    let binding_error = if env::var("NO_POLYGEN_BINDINGS") == Ok("1".to_string()) {
+        quote!()
+    } else {
         fs::create_dir_all(BINDING_DIR).expect("Could not create binding dir");
-        ENGINE
-            .flush_bindings(BINDING_DIR)
-            .expect("Could not flush bindings");
-    }
+        match ENGINE.flush_bindings(BINDING_DIR) {
+            Ok(_) => quote!(),
+            Err(e) => {
+                let message = e.to_string();
+                quote!(compile_error!(#message);)
+            }
+        }
+    };
 
     // build item into final output
     let output = match item {
@@ -50,5 +56,5 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     // construct final stream using vaidation and output
-    quote!(#validation #output).into()
+    quote!(#process_error #binding_error #output).into()
 }
