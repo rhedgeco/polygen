@@ -1,6 +1,0 @@
-namespace RustNative
-{
-{%- for item in items %}
-    {{ item.test }}
-{%- endfor %}
-}
