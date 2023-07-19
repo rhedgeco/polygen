@@ -40,6 +40,7 @@ impl PolygenEngine {
             scripts: Vec::new(),
             log: PolyLog::new(),
         };
+        poly.log.info("-- Initializing Polygen Engine --");
 
         // set up module resolvers for engine
         let dir = PathBuf::from(script_dir);
@@ -75,10 +76,38 @@ impl PolygenEngine {
             let rhai_str = rhai_path.to_string_lossy().to_string();
             poly.log.info(&format!("Loading rhai script '{rhai_str}'"));
             match poly.engine.compile_file(rhai_path) {
-                Ok(ast) => poly.scripts.push(PolyScript::new(name, ast)),
                 Err(e) => {
                     poly.log.error(&e.to_string());
                     continue;
+                }
+                Ok(ast) => {
+                    let mut has_render = false;
+                    let mut has_process = false;
+                    for f in ast.iter_functions() {
+                        if !has_process && f.name == "process" && f.params.len() == 1 {
+                            has_process = true;
+                        }
+
+                        if !has_render && f.name == "render" && f.params.len() == 1 {
+                            has_render = true;
+                        }
+
+                        if has_process && has_render {
+                            break;
+                        }
+                    }
+
+                    if has_process && has_render {
+                        poly.log.info(&format!("Generator registered -> {name}"));
+                        poly.scripts.push(PolyScript::new(name, ast));
+                    } else {
+                        poly.log.warn(&format!(
+                            "Failed to load script '{rhai_str}'.\n\
+                            - Scripts must contain functions 'process(item)' and 'render(items)'.\n\
+                            - All scripts in the root of './polygen' will try to be loaded.\n\
+                            - If this is a utility script consider placing it in a 'utils' folder."
+                        ));
+                    }
                 }
             }
         }
@@ -160,6 +189,10 @@ impl PolyLog {
 
     pub fn info(&mut self, text: &str) {
         self.log += &format!("[INFO]: {text}\n");
+    }
+
+    pub fn warn(&mut self, text: &str) {
+        self.log += &format!("[WARN]: {text}\n");
     }
 
     pub fn error(&mut self, text: &str) {
