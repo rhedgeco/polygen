@@ -1,10 +1,12 @@
-fn render_with_namespace(items, dll_name, namespace) {
-`namespace ${namespace}
+fn render_with_namespace(namespace, class_name, items) {
+`namespace ${as_pascal_case(namespace)}
 {
-${render_bare(items, dll_name)}
+${indent(4, render_bare(class_name, items))}
 }`
 }
 
-fn render_bare(items, dll_name) {
-`public class ${dll_name} {}`
+fn render_bare(class_name, items) {
+`public class ${as_pascal_case(class_name)}
+{
+}`
 }

@@ -1,4 +1,5 @@
 mod engine;
+mod functions;
 
 extern crate proc_macro;
 use engine::PolygenEngine;

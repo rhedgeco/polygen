@@ -1,7 +1,9 @@
 use glob::glob;
 use rhai::{module_resolvers::FileModuleResolver, serde::to_dynamic, Dynamic, Engine, Scope, AST};
-use std::{fs, io, path::PathBuf, sync::Mutex};
+use std::{env, fs, io, path::PathBuf, sync::Mutex};
 use thiserror::Error;
+
+use crate::functions;
 
 #[derive(Debug, Error)]
 #[error("'{name}' - {error}")]
@@ -41,6 +43,18 @@ impl PolygenEngine {
             log: PolyLog::new(),
         };
         poly.log.info("-- Initializing Polygen Engine --");
+
+        // register custom functions
+        poly.engine
+            .register_fn("indent", functions::indent)
+            .register_fn("as_camel_case", functions::as_camel_case)
+            .register_fn("as_pascal_case", functions::as_pascal_case)
+            .register_fn("as_snake_case", functions::as_snake_case)
+            .register_fn("as_capital_snake_case", functions::as_capital_snake_case)
+            .register_fn("as_kebab_case", functions::as_kebab_case)
+            .register_fn("as_capital_kebab_case", functions::as_capital_kebab_case)
+            .register_fn("as_train_case", functions::as_train_case)
+            .register_fn("as_title_case", functions::as_title_case);
 
         // set up module resolvers for engine
         let dir = PathBuf::from(script_dir);
@@ -88,7 +102,7 @@ impl PolygenEngine {
                             has_process = true;
                         }
 
-                        if !has_render && f.name == "render" && f.params.len() == 1 {
+                        if !has_render && f.name == "render" && f.params.len() == 2 {
                             has_render = true;
                         }
 
@@ -158,7 +172,8 @@ impl PolygenEngine {
             let items_guard = script.items.lock().unwrap();
             let dynamic_items =
                 to_dynamic(&*items_guard).expect("Internal Error: Bad source items");
-            let args = (dynamic_items,);
+            let project_name = env::var("CARGO_PKG_NAME").unwrap_or("untitled".to_string());
+            let args = (project_name, dynamic_items);
             let binding: String = self
                 .engine
                 .call_fn(&mut Scope::new(), &script.ast, "render", args)
