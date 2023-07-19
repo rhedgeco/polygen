@@ -112,6 +112,11 @@ impl PolygenEngine {
             }
         }
 
+        poly.log.info(&format!(
+            "Initialization Complete - {} Generators registered.",
+            poly.scripts.len(),
+        ));
+
         poly
     }
 
