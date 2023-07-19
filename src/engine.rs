@@ -94,21 +94,20 @@ impl PolygenEngine {
             let processed_item: Dynamic = self
                 .engine
                 .call_fn(&mut Scope::new(), &script.ast, "process", args)
-                .map_err(|error| {
-                    // process runtime errors to make them prettier
+                .map_err(|mut error| {
+                    // unravel any nested errors from function calls to get to the root error
                     use rhai::EvalAltResult::*;
+                    while let ErrorInFunctionCall(_, _, inner, _) = *error {
+                        error = inner;
+                    }
+
+                    // process runtime errors to make them prettier
+                    let error = match *error {
+                        ErrorRuntime(item, _) => anyhow::Error::msg(format!("{item}")),
+                        error => anyhow::Error::new(error),
+                    };
+
                     let name = script.name.clone();
-                    let ErrorInFunctionCall(_, _, error, _) = *error else {
-                        let error = anyhow::Error::new(error);
-                        return ValidationError { name, error };
-                    };
-
-                    let ErrorRuntime(item, _) = *error else {
-                        let error = anyhow::Error::new(error);
-                        return ValidationError { name, error };
-                    };
-
-                    let error = anyhow::Error::msg(item.to_string());
                     return ValidationError { name, error };
                 })?;
 
