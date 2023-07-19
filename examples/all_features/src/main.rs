@@ -11,7 +11,7 @@ struct Test {
 pub struct Test2 {
     test: u32,
     pub testy: bool,
-    woah: usize,
+    test_again: usize,
 }
 
 #[polygen]
@@ -26,7 +26,7 @@ fn main() {
     let test2 = Test2 {
         test: 5,
         testy: true,
-        woah: 2,
+        test_again: 2,
     };
     let _ = Test3 { test: 5, test2 };
 }
