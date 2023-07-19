@@ -1,4 +1,3 @@
-mod builder;
 mod engine;
 
 extern crate proc_macro;
@@ -49,12 +48,6 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    // build item into final output
-    let output = match item {
-        syn::Item::Struct(item) => builder::polystruct(item),
-        item => builder::unsupported(item),
-    };
-
-    // construct final stream using vaidation and output
-    quote!(#process_error #binding_error #output).into()
+    // merge all errors together with the original item
+    quote!(#process_error #binding_error #item).into()
 }

@@ -1,7 +1,7 @@
 use polygen::polygen;
 
 #[polygen]
-#[repr(C, align(4096))]
+#[repr(C)]
 struct Test {
     pub test: u32,
 }
@@ -21,4 +21,12 @@ pub struct Test3 {
     pub test2: Test2,
 }
 
-fn main() {}
+fn main() {
+    let _ = Test { test: 5 };
+    let test2 = Test2 {
+        test: 5,
+        testy: true,
+        woah: 2,
+    };
+    let _ = Test3 { test: 5, test2 };
+}
