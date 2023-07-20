@@ -1,21 +1,71 @@
 fn item(item) {
-    if item.struct != () { return struct(item.struct); }
+    if item.contains("mod") { return mod(item.mod); }
     throw "item is unsupported";
 }
 
+fn mod(mod) {
+    let m = #{};
+    m.name = mod.ident;
+
+    m.structs = [];
+    for item in mod.content {
+        if item.contains("struct") {
+            m.structs += struct(item.struct);
+        }
+    }
+
+    return m;
+}
+
 fn struct(struct) {
+    // fail on unit structs
+    if struct.fields.contains("unit") {
+        throw "unit structs are not supported";
+    }
+
+    // fail if there are no attributes
+    if !struct.contains("attrs") {
+        throw `${struct.ident} must have a '#[repr(C)]' attribute`;
+    }
+
+    let found = false;
+    for attr in struct.attrs {
+        try {
+            if attr.meta.list.path.segments[0].ident == "repr" &&
+                attr.meta.list.tokens[0].ident == "C" {
+                    found = true;
+            }
+        } catch(err) {
+            throw err;
+        }
+    }
+
+    if !found { throw `${struct.ident} must have a '#[repr(C)]' attribute`; }
+    
     let s = #{};
     s.type = "struct";
     s.vis = parse_vis(struct.vis);
     s.name = as_pascal_case(struct.ident);
-    s.fields = [];
 
-    for field in struct.fields.named {
-        let f = #{};
-        f.vis = parse_vis(field.vis);
-        f.name = as_camel_case(field.ident);
-        f.type = parse_type(field.ty.path.segments[-1].ident);
-        s.fields += f;
+    s.fields = [];
+    if struct.fields.contains("named") {
+        for field in struct.fields.named {
+            let f = #{};
+            f.vis = parse_vis(field.vis);
+            f.name = as_camel_case(field.ident);
+            f.type = parse_type(field.ty.path.segments[-1].ident);
+            s.fields += f;
+        }
+    }
+
+    if struct.fields.contains("unnamed") {
+        for (field, i) in struct.fields.unnamed {
+            let f = #{};
+            f.vis = parse_vis(field.vis);
+            f.name = "x" + i;
+            f.type = parse_type(field.ty.path.segments[-1].ident);
+            s.fields += f;
+        }
     }
 
     return s;

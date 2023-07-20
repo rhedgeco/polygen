@@ -1,6 +1,6 @@
 use glob::glob;
-use rhai::{module_resolvers::FileModuleResolver, serde::to_dynamic, Dynamic, Engine, Scope, AST};
-use std::{env, fs, io, path::PathBuf, sync::Mutex};
+use rhai::{module_resolvers::FileModuleResolver, serde::to_dynamic, Engine, Scope, AST};
+use std::{env, fs, io, path::PathBuf};
 use thiserror::Error;
 
 use crate::functions;
@@ -15,16 +15,11 @@ pub struct ValidationError {
 struct PolyScript {
     ast: AST,
     name: String,
-    items: Mutex<Vec<Dynamic>>,
 }
 
 impl PolyScript {
     pub fn new(name: String, ast: AST) -> Self {
-        Self {
-            ast,
-            name,
-            items: Mutex::new(Vec::new()),
-        }
+        Self { ast, name }
     }
 }
 
@@ -32,19 +27,24 @@ pub struct PolygenEngine {
     log: PolyLog,
     engine: Engine,
     scripts: Vec<PolyScript>,
+    build_dir: PathBuf,
+    package_name: String,
 }
 
 impl PolygenEngine {
-    pub fn new(script_dir: &str) -> Self {
+    pub fn new(script_dir: &str, build_dir: &str) -> Self {
         // create engine
         let mut poly = Self {
             engine: Engine::new(),
             scripts: Vec::new(),
             log: PolyLog::new(),
+            build_dir: PathBuf::from(build_dir),
+            package_name: env::var("CARGO_PKG_NAME").unwrap_or("untitled".to_string()),
         };
         poly.log.info("-- Initializing Polygen Engine --");
 
-        // register custom functions
+        // set up rhai engine
+        poly.engine.set_max_expr_depths(32, 32); // idk this felt right lol
         poly.engine
             .register_fn("indent", functions::indent)
             .register_fn("replace", functions::replace)
@@ -97,29 +97,17 @@ impl PolygenEngine {
                     continue;
                 }
                 Ok(ast) => {
-                    let mut has_render = false;
-                    let mut has_process = false;
-                    for f in ast.iter_functions() {
-                        if !has_process && f.name == "process" && f.params.len() == 1 {
-                            has_process = true;
-                        }
+                    let has_build_function = ast
+                        .iter_functions()
+                        .any(|f| f.name == "build" && f.params.len() == 1);
 
-                        if !has_render && f.name == "render" && f.params.len() == 2 {
-                            has_render = true;
-                        }
-
-                        if has_process && has_render {
-                            break;
-                        }
-                    }
-
-                    if has_process && has_render {
+                    if has_build_function {
                         poly.log.info(&format!("Generator registered -> {name}"));
                         poly.scripts.push(PolyScript::new(name, ast));
                     } else {
                         poly.log.warn(&format!(
                             "Failed to load script '{rhai_str}'.\n\
-                            - Scripts must contain functions 'process(item)' and 'render(items)'.\n\
+                            - Scripts must contain a 'build(item)' function.\n\
                             - All scripts in the root of './polygen' will try to be loaded.\n\
                             - If this is a utility script consider placing it in a 'utils' folder."
                         ));
@@ -136,14 +124,17 @@ impl PolygenEngine {
         poly
     }
 
-    pub fn process_item(&self, item: syn_serde::Item) -> Result<(), ValidationError> {
+    pub fn build_item(&self, item: syn_serde::Item) -> Result<(), ValidationError> {
         let dynamic_item = to_dynamic(item).expect("Internal Error: Bad source item");
 
         for script in self.scripts.iter() {
+            // first build the item into
             let args = (dynamic_item.clone(),);
-            let processed_item: Dynamic = self
+            let mut scope = Scope::new();
+            scope.push_constant("PACKAGE_NAME", self.package_name.clone());
+            let built_item: String = self
                 .engine
-                .call_fn(&mut Scope::new(), &script.ast, "process", args)
+                .call_fn(&mut scope, &script.ast, "build", args)
                 .map_err(|mut error| {
                     // unravel any nested errors from function calls to get to the root error
                     use rhai::EvalAltResult::*;
@@ -161,36 +152,22 @@ impl PolygenEngine {
                     return ValidationError { name, error };
                 })?;
 
-            script.items.lock().unwrap().push(processed_item);
-        }
+            // then save the item to disk
+            let item_dir = self.build_dir.join("items");
+            fs::create_dir_all(item_dir.clone()).map_err(|error| {
+                let name = script.name.clone();
+                let error = anyhow::Error::new(error);
+                ValidationError { name, error }
+            })?;
 
-        Ok(())
-    }
-
-    pub fn flush_bindings(&self, binding_dir: &str) -> Result<(), ValidationError> {
-        let dir = PathBuf::from(binding_dir);
-        for script in self.scripts.iter() {
-            let file_path = dir.join(script.name.clone());
-            let items_guard = script.items.lock().unwrap();
-            let dynamic_items =
-                to_dynamic(&*items_guard).expect("Internal Error: Bad source items");
-            let project_name = env::var("CARGO_PKG_NAME").unwrap_or("untitled".to_string());
-            let args = (project_name, dynamic_items);
-            let binding: String = self
-                .engine
-                .call_fn(&mut Scope::new(), &script.ast, "render", args)
-                .map_err(|error| {
-                    let error = anyhow::Error::new(error);
-                    let name = script.name.clone();
-                    ValidationError { name, error }
-                })?;
-
-            fs::write(file_path, binding).map_err(|error| {
+            let file_path = item_dir.join(script.name.clone());
+            fs::write(file_path, built_item).map_err(|error| {
                 let name = script.name.clone();
                 let error = anyhow::Error::new(error);
                 ValidationError { name, error }
             })?;
         }
+
         Ok(())
     }
 
