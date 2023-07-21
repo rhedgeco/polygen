@@ -25,7 +25,7 @@ fn struct(struct) {
 
     // reject struct if there are no attributed
     if !struct.contains("attrs") {
-        throw "structs must have #[repr(C)] attribute";
+        throw "structs must have #[repr(C)] or #[repr(transparent)] attribute";
     }
 
     // reject strust if it specifies alignment or packed
