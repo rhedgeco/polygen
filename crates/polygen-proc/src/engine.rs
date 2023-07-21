@@ -148,7 +148,7 @@ impl PolygenEngine {
                     match item {
                         Struct(item) => items.insert_struct(item.ident.to_string(), dynamic),
                         Fn(item) => items.insert_function(item.sig.ident.to_string(), dynamic),
-                        _ => return quote!("Internal Error: Item processed but not saved").into(),
+                        _ => panic!("Internal Error: Item processed but not saved"),
                     }
                 }
 
