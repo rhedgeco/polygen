@@ -1,6 +1,7 @@
 fn default_imports() {
     docformat(`
         using System;
+        using System.Runtime.InteropServices;
     `)
 }
 
@@ -34,6 +35,7 @@ fn item(item) {
 
 fn struct(struct) {
     let tmp = docformat(`
+        [StructLayout(LayoutKind.Sequential)]
         ${struct.vis} struct ${struct.name}
         {
         polygen-inner

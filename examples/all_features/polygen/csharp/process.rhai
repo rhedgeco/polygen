@@ -23,24 +23,19 @@ fn struct(struct) {
         throw "unit structs are not supported";
     }
 
-    // fail if there are no attributes
+    // reject struct if there are no attributed
     if !struct.contains("attrs") {
-        throw `${struct.ident} must have a '#[repr(C)]' attribute`;
+        throw "structs must have #[repr(C)] attribute";
     }
 
-    let found = false;
+    // reject strust if it specifies alignment or packed
+    // anything else will be caught by the compiler for being ffi unsafe
     for attr in struct.attrs {
-        try {
-            if attr.meta.list.path.segments[0].ident == "repr" &&
-                attr.meta.list.tokens[0].ident == "C" {
-                    found = true;
-            }
-        } catch(err) {
-            throw err;
+        for token in attr.meta?.list?.tokens {
+            if token.ident == "align" { throw "structs must not have an 'align' specified"; }
+            if token.ident == "packed" { throw "structs must not have 'packed' specified"; }
         }
     }
-
-    if !found { throw `${struct.ident} must have a '#[repr(C)]' attribute`; }
     
     let s = #{};
     s.type = "struct";
@@ -91,6 +86,7 @@ fn parse_type(type) {
     if type == "f32" { return "float"; }
     if type == "f64" { return "double"; }
     if type == "char" { throw "char is not supported"; }
+    if type == "bool" { return "bool"; }
     
     return type;
 }
