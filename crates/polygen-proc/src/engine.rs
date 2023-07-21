@@ -187,8 +187,9 @@ impl PolygenEngine {
             ) {
                 // save the rendered file
                 Ok(rendered) => {
-                    let render_path = self.build_dir.join(&script.name);
-                    if let Err(error) = fs::create_dir_all(&self.build_dir) {
+                    let render_dir = self.build_dir.join("generated");
+                    let render_path = render_dir.join(&script.name);
+                    if let Err(error) = fs::create_dir_all(render_dir) {
                         let error_message = format!("{} - {error}", script.name);
                         return quote! {
                             compile_error!(#error_message);
