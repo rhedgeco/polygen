@@ -17,11 +17,18 @@ struct TupleStruct(i8, pub i16, usize);
 #[polygen]
 #[repr(C)]
 #[allow(dead_code)]
-struct MultiStruct {
+pub struct MultiStruct {
     item: isize,
     normal_item: NormalStruct,
     tuple_item: TupleStruct,
     nested_item: nested::NestedStruct,
+}
+
+#[polygen]
+#[repr(transparent)]
+#[allow(dead_code)]
+struct TransparentStruct {
+    pub value: MultiStruct,
 }
 
 mod nested {
