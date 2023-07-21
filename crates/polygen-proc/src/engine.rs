@@ -146,8 +146,34 @@ impl PolygenEngine {
                 Ok(dynamic) => {
                     let mut items = script.items.lock().unwrap();
                     match item {
-                        Struct(item) => items.insert_struct(item.ident.to_string(), dynamic),
-                        Fn(item) => items.insert_function(item.sig.ident.to_string(), dynamic),
+                        Struct(item) => {
+                            if !items.insert_struct(item.ident.to_string(), dynamic) {
+                                let message = format!(
+                                    "struct with identity '{}' already exported. \
+                                    All exported structs must not have overlapping names.",
+                                    item.ident.to_string()
+                                );
+                                return quote! {
+                                    compile_error!(#message);
+                                    #processed_item
+                                }
+                                .into();
+                            }
+                        }
+                        Fn(item) => {
+                            if !items.insert_function(item.sig.ident.to_string(), dynamic) {
+                                let message = format!(
+                                    "function with identity '{}' already exported. \
+                                    All exported functions must not have overlapping names.",
+                                    item.sig.ident.to_string()
+                                );
+                                return quote! {
+                                    compile_error!(#message);
+                                    #processed_item
+                                }
+                                .into();
+                            }
+                        }
                         _ => panic!("Internal Error: Item processed but not saved"),
                     }
                 }
@@ -259,20 +285,22 @@ impl PolyItems {
         map
     }
 
-    pub fn insert_struct(&mut self, name: String, dynamic: Dynamic) {
+    pub fn insert_struct(&mut self, name: String, dynamic: Dynamic) -> bool {
         if !self.struct_names.insert(name) {
-            return;
+            return false;
         }
 
         self.structs.push(dynamic);
+        true
     }
 
-    pub fn insert_function(&mut self, name: String, dynamic: Dynamic) {
+    pub fn insert_function(&mut self, name: String, dynamic: Dynamic) -> bool {
         if !self.function_names.insert(name) {
-            return;
+            return false;
         }
 
         self.functions.push(dynamic);
+        true
     }
 }
 
