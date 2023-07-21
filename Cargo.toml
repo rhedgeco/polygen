@@ -3,6 +3,9 @@ name = "polygen"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+no-ffi = ["polygen-proc/no-ffi"]
+
 [dependencies]
 polygen-core = { path = "./crates/polygen-core" }
 polygen-proc = { path = "./crates/polygen-proc" }

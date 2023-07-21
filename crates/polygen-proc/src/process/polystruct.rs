@@ -19,6 +19,18 @@ pub fn polystruct(polystruct: &syn::ItemStruct) -> TokenStream {
         field_assertions.extend(assertion);
     }
 
+    #[cfg(feature = "no-ffi")]
+    let ffi_assertions = quote!();
+    #[cfg(not(feature = "no-ffi"))]
+    let ffi_assertions = quote! {
+        const _: fn() = || {
+            extern "C" {
+                #[deny(improper_ctypes)]
+                fn __assert_ffi_safe #gen_impl (item: #name #gen_type) #gen_where;
+            }
+        };
+    };
+
     quote! {
         // add the original struct unchanged
         #polystruct
@@ -30,11 +42,6 @@ pub fn polystruct(polystruct: &syn::ItemStruct) -> TokenStream {
         unsafe impl #gen_impl polygen::__private::exported_by_polygen for #name #gen_type #gen_where {}
 
         // assert that this type is FFI safe
-        const _: fn() = || {
-            extern "C" {
-                #[deny(improper_ctypes)]
-                fn __assert_ffi_safe #gen_impl (item: #name #gen_type) #gen_where;
-            }
-        };
+        #ffi_assertions
     }
 }
