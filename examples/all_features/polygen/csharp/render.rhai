@@ -18,7 +18,7 @@ fn namespace(name, inner) {
 
 fn static_class(name, inner) {
     let tmp = docformat(`
-        public static class ${as_pascal_case(name)}
+        public static partial class ${as_pascal_case(name)}
         {
         polygen-inner
         }
