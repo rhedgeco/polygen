@@ -2,6 +2,6 @@
     "rust-analyzer.linkedProjects": [
         "./examples/all_features/Cargo.toml",
         "./crates/polygen-proc/Cargo.toml",
-        "./crates/polygen-core/Cargo.toml"
+        "./crates/polygen-private/Cargo.toml"
     ]
 }
