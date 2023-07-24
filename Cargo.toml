@@ -7,5 +7,5 @@ edition = "2021"
 no-ffi = ["polygen-proc/no-ffi"]
 
 [dependencies]
-polygen-core = { path = "./crates/polygen-core" }
 polygen-proc = { path = "./crates/polygen-proc" }
+polygen-private = { path = "./crates/polygen-private" }

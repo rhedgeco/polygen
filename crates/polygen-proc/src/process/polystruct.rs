@@ -1,13 +1,26 @@
 use quote::{__private::TokenStream, quote};
 
-pub fn polystruct(polystruct: &syn::ItemStruct) -> TokenStream {
-    let name = &polystruct.ident;
-    let (gen_impl, gen_type, gen_where) = polystruct.generics.split_for_impl();
+pub fn polystruct(item: &syn::ItemStruct) -> TokenStream {
+    let name = &item.ident;
+    let (gen_impl, gen_type, gen_where) = item.generics.split_for_impl();
 
-    let mut field_assertions = quote!();
-    for field in &polystruct.fields {
+    // create initial output token stream
+    let mut output = quote!(#item);
+
+    // impl the 'exported_by_polygen' trait for this struct
+    output = quote! {
+        #output
+
+        unsafe impl #gen_impl polygen::__private::exported_by_polygen for #name #gen_type
+            #gen_where {}
+    };
+
+    // assert that all fields are also exported by polygen
+    for field in &item.fields {
         let ty = &field.ty;
-        let assertion = quote! {
+        output = quote! {
+            #output
+
             const _: fn() = || {
                 fn __accept_exported<T: polygen::__private::exported_by_polygen>(item: T) {}
                 fn __assert_exported(item: #ty) {
@@ -15,33 +28,7 @@ pub fn polystruct(polystruct: &syn::ItemStruct) -> TokenStream {
                 }
             };
         };
-
-        field_assertions.extend(assertion);
     }
 
-    #[cfg(feature = "no-ffi")]
-    let ffi_assertions = quote!();
-    #[cfg(not(feature = "no-ffi"))]
-    let ffi_assertions = quote! {
-        const _: fn() = || {
-            extern "C" {
-                #[deny(improper_ctypes)]
-                fn __assert_ffi_safe #gen_impl (item: #name #gen_type) #gen_where;
-            }
-        };
-    };
-
-    quote! {
-        // add the original struct unchanged
-        #polystruct
-
-        // add field assertions
-        #field_assertions
-
-        // implement a marker type for other field assertions
-        unsafe impl #gen_impl polygen::__private::exported_by_polygen for #name #gen_type #gen_where {}
-
-        // assert that this type is FFI safe
-        #ffi_assertions
-    }
+    output
 }
