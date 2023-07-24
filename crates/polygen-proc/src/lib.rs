@@ -24,7 +24,7 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     use syn::Item::*;
     let mut output = match &item {
         Struct(item) => process::polystruct(item),
-        item => process::unsupported(item),
+        item => process::other(item),
     };
 
     // ensure engine is successfully loaded
