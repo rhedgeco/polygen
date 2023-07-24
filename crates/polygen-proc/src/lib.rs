@@ -1,4 +1,5 @@
 mod engine;
+mod process;
 
 extern crate proc_macro;
 
@@ -16,25 +17,33 @@ static ENGINE: Lazy<Result<PolyEngine, EngineError>> = Lazy::new(|| PolyEngine::
 
 #[proc_macro_attribute]
 pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // parse item
     let item = syn::parse_macro_input!(item as syn::Item);
 
-    // ensure engine is correctly loaded
+    // process item
+    use syn::Item::*;
+    let mut output = match &item {
+        Struct(item) => process::polystruct(item),
+        item => process::other(item),
+    };
+
+    // ensure engine is successfully loaded
     let engine = match ENGINE.as_ref() {
         Ok(engine) => engine,
         Err(error) => {
             let message = format!("Polygen Load Error: {error}");
             return quote! {
-                #item
+                #output
                 compile_error!(#message);
             }
             .into();
         }
     };
 
-    // loop over all scripts to process the item
-    // combine all errors found into a single quote!
-    let mut output = quote!(#item);
+    // convert the item into a dynamic item useful to rhai scripts
     let dynamic = rhai::serde::to_dynamic(item.to_adapter()).expect("Internal Error");
+
+    // loop over all scripts
     for script in engine.scripts() {
         let script_name = script.name();
 
@@ -90,5 +99,6 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
+    // return the token stream
     output.into()
 }
