@@ -45,7 +45,7 @@ public static partial class NativeLibrary
     }
 
     [DllImport(NativeLib, EntryPoint = "_cool_function", CallingConvention = CallingConvention.Cdecl)]
-    private static extern TupleStruct CoolFunction(sbyte value, NormalStruct normalStruct);
+    private static extern uint CoolFunction(sbyte value, NormalStruct normalStruct);
 }
 ```
 
