@@ -61,7 +61,8 @@ impl PolyScript {
         let options = rhai::CallFnOptions::new().bind_this_ptr(&mut *store_guard);
 
         let mut scope = rhai::Scope::new();
-        scope.push_constant("PACKAGE_NAME", env!("CARGO_PKG_NAME"));
+        let package_name = std::env::var("CARGO_PKG_NAME").unwrap_or("pkg_error".to_string());
+        scope.push_constant("PACKAGE_NAME", package_name);
 
         self.engine
             .call_fn_with_options(options, &mut scope, &self.ast, "process", (item,))?;
@@ -74,7 +75,8 @@ impl PolyScript {
         let options = rhai::CallFnOptions::new().bind_this_ptr(&mut *store_guard);
 
         let mut scope = rhai::Scope::new();
-        scope.push_constant("PACKAGE_NAME", env!("CARGO_PKG_NAME"));
+        let package_name = std::env::var("CARGO_PKG_NAME").unwrap_or("pkg_error".to_string());
+        scope.push_constant("PACKAGE_NAME", package_name);
 
         self.engine
             .call_fn_with_options::<String>(options, &mut scope, &self.ast, "render", ())

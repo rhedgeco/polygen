@@ -5,6 +5,10 @@ fn default_imports() {
     `)
 }
 
+fn constant(name, type, value) {
+    return `public const ${type} ${name} = ${value};`;
+}
+
 fn namespace(name, inner) {
     let tmp = docformat(`
         namespace ${as_pascal_case(name)}
@@ -50,6 +54,19 @@ fn struct_field(field) {
     docformat(`
         ${field.vis} ${field.type} ${field.name};
     `)
+}
+
+fn function(lib_name, func) {
+    let inputs = each(func.inputs, ", ", function_input);
+
+    return docformat(`
+        [DllImport(${lib_name}, EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
+        ${func.vis} static extern ${func.output} ${func.name}(${inputs});
+    `);
+}
+
+fn function_input(input) {
+    return `${input.type} ${input.name}`;
 }
 
 fn each(items, seperator, function) {
