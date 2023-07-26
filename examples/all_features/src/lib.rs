@@ -31,10 +31,10 @@ struct TransparentStruct {
     pub value: MultiStruct,
 }
 
-// #[polygen]
-// extern "C" fn cool_function(value: i8, normal_struct: NormalStruct) -> TupleStruct {
-//     TupleStruct(value, 2, 3)
-// }
+#[polygen]
+extern "C" fn _cool_function(value: i8, _normal_struct: NormalStruct) -> TupleStruct {
+    TupleStruct(value, 2, 3)
+}
 
 mod nested {
     use super::*;
@@ -45,5 +45,3 @@ mod nested {
         field1: i64,
     }
 }
-
-fn main() {}

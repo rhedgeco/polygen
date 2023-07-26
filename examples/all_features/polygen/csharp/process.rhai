@@ -1,33 +1,10 @@
-fn item(item) {
-    if item.contains("mod") { return mod(item.mod); }
-    throw "item is unsupported";
-}
-
-fn mod(mod) {
-    let m = #{};
-    m.name = mod.ident;
-
-    m.structs = [];
-    for item in mod.content {
-        if item.contains("struct") {
-            m.structs += struct(item.struct);
-        }
-    }
-
-    return m;
-}
-
 fn struct(struct) {
     // fail on unit structs
     if struct.fields.contains("unit") {
         throw "unit structs are not supported";
     }
 
-    // reject struct if there are no attributed
-    if !struct.contains("attrs") {
-        throw "structs must have #[repr(C)] or #[repr(transparent)] attribute";
-    }
-
+    // TODO: allow for align and packed. csharp seems to have the tools to make this happen
     // reject strust if it specifies alignment or packed
     // anything else will be caught by the compiler for being ffi unsafe
     for attr in struct.attrs {
@@ -38,7 +15,6 @@ fn struct(struct) {
     }
     
     let s = #{};
-    s.type = "struct";
     s.vis = parse_vis(struct.vis);
     s.name = as_pascal_case(struct.ident);
 
@@ -64,6 +40,37 @@ fn struct(struct) {
     }
 
     return s;
+}
+
+fn function(func) {
+    let f = #{};
+    f.vis = parse_vis(func.vis);
+    f.original_name = func.ident;
+    f.name = as_pascal_case(func.ident);
+
+    f.inputs = [];
+    for (input, index) in func.inputs {
+        if !input.contains("typed") { continue; }
+        let i = #{};
+
+        let ident = input.typed.pat.ident;
+        if ident != () {
+            i.name = as_camel_case(ident.ident);
+        } else {
+            i.name = `_`;
+        }
+
+        i.type = parse_type(input.typed.ty.path.segments[-1].ident);
+        f.inputs += i;
+    }
+
+    if func.contains("output") {
+        f.output = parse_type(func.output.path.segments[-1].ident);
+    } else {
+        f.output = "void";
+    }
+
+    return f;
 }
 
 fn parse_vis(vis) {

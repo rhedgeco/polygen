@@ -1,5 +1,5 @@
-mod other;
+mod polyfunction;
 mod polystruct;
 
-pub use other::*;
+pub use polyfunction::*;
 pub use polystruct::*;
