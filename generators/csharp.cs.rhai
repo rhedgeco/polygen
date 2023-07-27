@@ -1,3 +1,4 @@
+import "utils/utils" as utils;
 import "csharp/render" as render;
 import "csharp/process" as process;
 
@@ -37,10 +38,10 @@ fn render() {
     let lib_const = render::constant("NativeLib", "string", `"${replace(PACKAGE_NAME, "-", "_")}"`);
 
     // render all structs
-    let structs = render::each(this.structs.values(), "\n\n", |struct| render::struct(struct));
+    let structs = utils::render_each(this.structs.values(), "\n\n", |struct| render::struct(struct));
 
     // render all functions
-    let functions = render::each(this.functions.values(), "\n\n", |func| render::function("NativeLib", func));
+    let functions = utils::render_each(this.functions.values(), "\n\n", |func| render::function("NativeLib", func));
 
     // combine all items
     let items = lib_const + "\n\n" + structs + "\n\n" + functions;
