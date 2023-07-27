@@ -34,7 +34,7 @@ fn process(item) {
 
 fn render() {
     // render constant for library name
-    let lib_const = render::constant("NativeLib", "string", `"${PACKAGE_NAME}"`);
+    let lib_const = render::constant("NativeLib", "string", `"${replace(PACKAGE_NAME, "-", "_")}"`);
 
     // render all structs
     let structs = render::each(this.structs.values(), "\n\n", |struct| render::struct(struct));
