@@ -50,4 +50,4 @@ public static partial class NativeLibrary
 ```
 
 # Generators
-Polygen utilizes the [rhai scripting language](rhai.rs) to generate bindings making it extensible to any bindings you want to generate.
+Polygen utilizes the [rhai scripting language](rhai.rs) to generate bindings. This makes it extensible in any way you like. Either modify existing scripts, or create a generator for a whole new language youself! No pull request needed!
