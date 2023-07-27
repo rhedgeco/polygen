@@ -1,3 +1,5 @@
+import "utils/utils" as utils;
+
 fn default_imports() {
     docformat(`
         using System;
@@ -46,7 +48,7 @@ fn struct(struct) {
         }
     `);
     
-    let fields = each(struct.fields, "\n", struct_field);
+    let fields = utils::render_each(struct.fields, "\n", struct_field);
     return replace(tmp, "polygen-inner", indent(4, fields));
 }
 
@@ -57,7 +59,7 @@ fn struct_field(field) {
 }
 
 fn function(lib_name, func) {
-    let inputs = each(func.inputs, ", ", function_input);
+    let inputs = utils::render_each(func.inputs, ", ", function_input);
 
     return docformat(`
         [DllImport(${lib_name}, EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
