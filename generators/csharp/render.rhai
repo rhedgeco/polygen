@@ -33,12 +33,6 @@ fn static_class(name, inner) {
     return replace(tmp, "polygen-inner", indent(4, inner));
 }
 
-fn item(item) {
-    if item.type == "struct" { return struct(item); }
-    else { return `// Item ${item.type} is unimplemented.` }
-}
-
-
 fn struct(struct) {
     let tmp = docformat(`
         [StructLayout(LayoutKind.Sequential)]
