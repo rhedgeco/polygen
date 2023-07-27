@@ -10,6 +10,8 @@ pub fn polystruct(item: &syn::ItemStruct) -> TokenStream {
         output.extend(quote_spanned! { item.generics.params.span() =>
             compile_error!("Polygen does not support generic types.");
         });
+
+        return output;
     }
 
     // fail if the struct is not #[repr(C)] or #[repr(transparent)]

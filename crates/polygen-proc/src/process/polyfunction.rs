@@ -10,6 +10,8 @@ pub fn polyfunction(item: &syn::ItemFn) -> TokenStream {
         output.extend(quote_spanned! { item.sig.generics.params.span() =>
             compile_error!("Polygen does not support generic functions.");
         });
+
+        return output;
     }
 
     // fail if function is not 'extern "C"'
