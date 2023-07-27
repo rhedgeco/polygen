@@ -18,14 +18,14 @@ static ENGINE: Lazy<Result<PolyEngine, EngineError>> = Lazy::new(|| PolyEngine::
 #[proc_macro_attribute]
 pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // parse item
-    let item = syn::parse_macro_input!(item as syn::Item);
+    let mut item = syn::parse_macro_input!(item as syn::Item);
 
     // process item
     use syn::Item::*;
-    let mut output = match &item {
+    let mut output = match &mut item {
         Struct(item) => process::polystruct(item),
         Fn(item) => process::polyfunction(item),
-        item => quote!( #item ),
+        item => process::unsupported(item),
     };
 
     // ensure engine is successfully loaded
@@ -33,11 +33,11 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
         Ok(engine) => engine,
         Err(error) => {
             let message = format!("Polygen Load Error: {error}");
-            return quote! {
-                #output
+            output.extend(quote! {
                 compile_error!(#message);
-            }
-            .into();
+            });
+
+            return output.into();
         }
     };
 
@@ -64,10 +64,7 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             // combine output with new error message
             let message = format!("'{script_name}' - {error}");
-            output = quote! {
-                #output
-                compile_error!(#message);
-            }
+            output.extend(quote!(compile_error!(#message);))
         }
 
         // render all the items
@@ -75,27 +72,18 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
             Ok(contents) => {
                 if let Err(error) = fs::create_dir_all(BUILD_DIR) {
                     let message = format!("'{script_name}' - {error}");
-                    output = quote! {
-                        #output
-                        compile_error!(#message);
-                    }
+                    output.extend(quote!(compile_error!(#message);))
                 }
 
                 let file_path = PathBuf::from(BUILD_DIR).join(script_name);
                 if let Err(error) = fs::write(file_path, contents) {
                     let message = format!("'{script_name}' - {error}");
-                    output = quote! {
-                        #output
-                        compile_error!(#message);
-                    }
+                    output.extend(quote!(compile_error!(#message);))
                 }
             }
             Err(error) => {
                 let message = format!("'{script_name}' - {error}");
-                output = quote! {
-                    #output
-                    compile_error!(#message);
-                }
+                output.extend(quote!(compile_error!(#message);))
             }
         }
     }

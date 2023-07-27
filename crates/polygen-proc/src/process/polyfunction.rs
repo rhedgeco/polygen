@@ -1,16 +1,15 @@
-use quote::{__private::TokenStream, quote};
+use quote::{__private::TokenStream, quote, quote_spanned};
+use syn::spanned::Spanned;
 
 pub fn polyfunction(item: &syn::ItemFn) -> TokenStream {
     // create initial token stream
-    let mut output = quote!( #item );
+    let mut output = quote!();
 
     // fail if function contains generics
     if !item.sig.generics.params.empty_or_trailing() {
-        return quote! {
-            #output
-
-            compile_error!("Polygen does not support generic functions as they are not FFI safe.");
-        };
+        output.extend(quote_spanned! { item.sig.generics.params.span() =>
+            compile_error!("Polygen does not support generic functions.");
+        });
     }
 
     // fail if function is not 'extern "C"'
@@ -20,24 +19,21 @@ pub fn polyfunction(item: &syn::ItemFn) -> TokenStream {
             name: Some(name),
         }) if name.value() == format!("C") => (), // successfully found C abi
         _ => {
-            output = quote! {
-                #output
-                compile_error!("Polygen functions must use 'extern \"C\"' abi");
-            }
+            output.extend(quote! {
+                compile_error!("Polygen functions must use 'extern \"C\"' abi.");
+            });
         }
     }
 
     // assert that output type is exported by polygen
     use syn::ReturnType::*;
     if let Type(_, ty) = &item.sig.output {
-        output = quote! {
-            #output
-
+        output.extend(quote_spanned! { ty.span() =>
             const _: fn() = || {
                 fn __accept_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
                 fn __assert_exported(_item: #ty) { __accept_exported(_item); }
             };
-        };
+        });
     }
 
     // assert that all input fields are also exported by polygen
@@ -45,26 +41,24 @@ pub fn polyfunction(item: &syn::ItemFn) -> TokenStream {
         use syn::FnArg::*;
         let typed = match input {
             Typed(typed) => typed,
-            Receiver(_) => {
-                output = quote! {
-                    #output
-
-                    compile_error!("Polygen doesnt support the 'self' parameter");
-                };
+            Receiver(reciever) => {
+                output.extend(quote_spanned! { reciever.span() =>
+                    compile_error!("Polygen doesnt support the 'self' parameter.");
+                });
                 continue;
             }
         };
 
         let ty = &typed.ty;
-        output = quote! {
-            #output
-
+        output.extend(quote_spanned! { ty.span() =>
             const _: fn() = || {
                 fn __accept_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
                 fn __assert_exported(_item: #ty) { __accept_exported(_item); }
             };
-        };
+        });
     }
 
+    // add the function and return
+    output.extend(quote!(#item));
     output
 }
