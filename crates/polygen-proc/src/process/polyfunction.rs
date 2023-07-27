@@ -7,11 +7,10 @@ pub fn polyfunction(item: &syn::ItemFn) -> TokenStream {
 
     // fail if function contains generics
     if !item.sig.generics.params.empty_or_trailing() {
-        output.extend(quote_spanned! { item.sig.generics.params.span() =>
+        return quote_spanned! { item.sig.generics.params.span() =>
             compile_error!("Polygen does not support generic functions.");
-        });
-
-        return output;
+            #item
+        };
     }
 
     // fail if function is not 'extern "C"'
