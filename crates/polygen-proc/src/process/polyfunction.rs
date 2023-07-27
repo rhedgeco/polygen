@@ -58,6 +58,7 @@ pub fn polyfunction(item: &syn::ItemFn) -> TokenStream {
         });
     }
 
+    // add the function and return
     output.extend(quote!(#item));
     output
 }

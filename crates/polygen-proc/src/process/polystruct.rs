@@ -12,7 +12,7 @@ pub fn polystruct(item: &syn::ItemStruct) -> TokenStream {
         });
     }
 
-    // fail if the struct is not #[repr(C)]
+    // fail if the struct is not #[repr(C)] or #[repr(transparent)]
     use syn::Meta::*;
     if !item.attrs.iter().any(|attr| match &attr.meta {
         List(syn::MetaList {
@@ -46,6 +46,7 @@ pub fn polystruct(item: &syn::ItemStruct) -> TokenStream {
         });
     }
 
+    // add the struct and return
     output.extend(quote!(#item));
     output
 }
