@@ -18,14 +18,14 @@ static ENGINE: Lazy<Result<PolyEngine, EngineError>> = Lazy::new(|| PolyEngine::
 #[proc_macro_attribute]
 pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // parse item
-    let item = syn::parse_macro_input!(item as syn::Item);
+    let mut item = syn::parse_macro_input!(item as syn::Item);
 
     // process item
     use syn::Item::*;
-    let mut output = match &item {
+    let mut output = match &mut item {
         Struct(item) => process::polystruct(item),
         Fn(item) => process::polyfunction(item),
-        item => quote!( #item ),
+        item => process::unsupported(item),
     };
 
     // ensure engine is successfully loaded
