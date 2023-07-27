@@ -60,3 +60,5 @@ public static partial class SimpleLib
 
 # Generators
 Polygen utilizes the [rhai scripting language](rhai.rs) to generate bindings. This makes it extensible in any way you like. Either modify existing scripts, or create a generator for a whole new language youself! No pull request needed!
+
+To get started, check out the [existing library of generators](./generators/)!
