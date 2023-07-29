@@ -1,0 +1,6 @@
+# Ignore compiled files
+target/
+debug/
+
+# Ignore cargo lock file
+Cargo.lock
