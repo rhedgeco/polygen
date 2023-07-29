@@ -3,55 +3,55 @@ import "csharp/render" as render;
 import "csharp/process" as process;
 
 fn process(item) {
-    // create struct array if it doesnt exist
     if this.structs == () { this.structs = #{}; }
     if this.functions == () { this.functions = #{}; }
 
-    // process item according to its type
-    if item.contains("struct") {
-        let struct = item.struct;
-        let name = struct.ident;
+    let key = item.keys()[0];
+    let value = item.values()[0];
 
-        // check for overlapping struct names
-        if this.structs.contains(name) {
-            throw `Cannot export more than one struct with name '${name}'`;
+    if key == "Struct" {
+        if this.structs.contains(value.name) {
+            throw `Cannot export multiple structs with name '${value.name}'`;
         }
 
-        this.structs[name] = process::struct(struct);
-    } else if item.contains("fn") {
-        let func = item["fn"];
-        let name = func.ident;
-
-        // check for overlapping function names
-        if this.functions.contains(name) {
-            throw `Cannot export more than one function with name '${name}'`;
+        this.structs[value.name] = process::struct(value);
+    } else if key == "Fn" { 
+        if this.functions.contains(value.name) {
+            throw `Cannot export multiple functions with name '${value.name}'`;
         }
 
-        this.functions[name] = process::function(func);
-    } else { 
-        throw `'${item.keys()[0]}' items are not supported`;
-    }
+        this.functions[value.name] = process::function(value);
+    } else { throw "This item is unsupported by c-sharp"; }
 }
 
 fn render() {
-    // render constant for library name
-    let lib_const = render::constant("NativeLib", "string", `"${replace(PACKAGE_NAME, "-", "_")}"`);
+    // create library template
+    let library = docformat(`
+        public const string NativeLib = "${replace(PACKAGE_NAME, "-", "_")}";
 
-    // render all structs
+        poly-structs
+
+        poly-functions
+    `);
+
+    // replace placeholder text with rendered items
     let structs = utils::render_each(this.structs.values(), "\n\n", |struct| render::struct(struct));
-
-    // render all functions
+    let library = replace(library, "poly-structs", structs);
     let functions = utils::render_each(this.functions.values(), "\n\n", |func| render::function("NativeLib", func));
+    let library = replace(library, "poly-functions", functions);
 
-    // combine all items
-    let items = lib_const + "\n\n" + structs + "\n\n" + functions;
+    // render final output template
+    let output = docformat(`
+        using System;
+        using System.Runtime.InteropServices;
 
-    // render a static class to hold the items
-    let static_class = render::static_class(PACKAGE_NAME, items);
+        poly-static-class
+    `);
 
-    // render the default imports
-    let imports = render::default_imports();
+    // replace placeholder text with rendered static class
+    let static_class = render::static_class(PACKAGE_NAME, library);
+    let output = replace(output, "poly-static-class", static_class);
 
-    // combine the imports and class for the final render
-    return imports + "\n\n" + static_class + "\n";
+    // return rendered file with a newline
+    return output + "\n";
 }

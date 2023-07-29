@@ -1,16 +1,5 @@
 import "utils/utils" as utils;
 
-fn default_imports() {
-    docformat(`
-        using System;
-        using System.Runtime.InteropServices;
-    `)
-}
-
-fn constant(name, type, value) {
-    return `public const ${type} ${name} = ${value};`;
-}
-
 fn namespace(name, inner) {
     let tmp = docformat(`
         namespace ${as_pascal_case(name)}
@@ -46,9 +35,9 @@ fn struct(struct) {
     return replace(tmp, "polygen-inner", indent(4, fields));
 }
 
-fn struct_field(field) {
+private fn struct_field(field) {
     docformat(`
-        ${field.vis} ${field.type} ${field.name};
+        ${field.vis} ${field.type.name} ${field.name};
     `)
 }
 
@@ -57,10 +46,10 @@ fn function(lib_name, func) {
 
     return docformat(`
         [DllImport(${lib_name}, EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
-        ${func.vis} static extern ${func.output} ${func.name}(${inputs});
+        ${func.vis} static extern ${func.output.name} ${func.name}(${inputs});
     `);
 }
 
-fn function_input(input) {
-    return `${input.type} ${input.name}`;
+private fn function_input(input) {
+    return `${input.type.name} ${input.name}`;
 }

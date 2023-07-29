@@ -19,12 +19,6 @@ pub struct MultiStruct {
 }
 
 #[polygen]
-#[repr(transparent)]
-pub struct TransparentStruct {
-    pub value: MultiStruct,
-}
-
-#[polygen]
 pub extern "C" fn _cool_function(value: i8, _normal_struct: NormalStruct) -> TupleStruct {
     TupleStruct(value, 2, 3)
 }

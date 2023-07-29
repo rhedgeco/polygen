@@ -7,6 +7,12 @@ pub struct NormalStruct {
 }
 
 #[polygen]
+pub struct TestStruct {
+    floater: f64,
+    another_float: f32,
+}
+
+#[polygen]
 pub fn create_struct() -> NormalStruct {
     NormalStruct {
         item: 42,

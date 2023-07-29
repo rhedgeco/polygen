@@ -1,80 +1,72 @@
+private fn is_keyword(string) {
+    const KEYWORDS = [
+        "abstract", "as", "base", "bool", "break",
+        "byte", "case", "catch", "char", "checked",
+        "class", "const", "continue", "decimal", "default",
+        "delegate", "do", "double", "else", "enum",
+        "event", "explicit", "extern", "false", "finally",
+        "fixed", "float", "for", "foreach", "goto",
+        "if", "implicit", "in", "int", "interface",
+        "internal", "is", "lock", "long", "namespace",
+        "new", "null", "object", "operator", "out",
+        "override", "params", "private", "protected", "public",
+        "readonly", "ref", "return", "sbyte", "sealed",
+        "short", "sizeof", "stackalloc", "static",
+        "string", "struct", "switch", "this", "throw",
+        "true", "try", "typeof", "uint", "ulong",
+        "unchecked", "unsafe", "ushort", "using",
+        "virtual", "void", "volatile", "while"
+    ];
+
+    if KEYWORDS.contains(string) {
+        return true;
+    }
+
+    return false;
+}
+
 fn struct(struct) {
-    // fail on unit structs
-    if struct.fields.contains("unit") {
-        throw "unit structs are not supported";
-    }
+    struct.vis = parse_vis(struct.vis);
+    struct.name = as_pascal_case(struct.name);
 
-    // TODO: allow for align and packed. csharp seems to have the tools to make this happen
-    // reject strust if it specifies alignment or packed
-    // anything else will be caught by the compiler for being ffi unsafe
-    for attr in struct.attrs {
-        for token in attr.meta?.list?.tokens {
-            if token.ident == "align" { throw "structs must not have an 'align' specified"; }
-            if token.ident == "packed" { throw "structs must not have 'packed' specified"; }
+    for i in 0..struct.fields.len() {
+        let name = as_camel_case(struct.fields[i].name);
+        if is_keyword(name) {
+            throw `cannot use field name '${name}' because it is also a csharp keyword`;
         }
-    }
-    
-    let s = #{};
-    s.vis = parse_vis(struct.vis);
-    s.name = as_pascal_case(struct.ident);
 
-    s.fields = [];
-    if struct.fields.contains("named") {
-        for field in struct.fields.named {
-            let f = #{};
-            f.vis = parse_vis(field.vis);
-            f.name = as_camel_case(field.ident);
-            f.type = parse_type(field.ty.path.segments[-1].ident);
-            s.fields += f;
-        }
+        struct.fields[i].name = name;
+        struct.fields[i].vis = parse_vis(struct.fields[i].vis);
+        struct.fields[i].type.name = parse_type(struct.fields[i].type.name);
     }
 
-    if struct.fields.contains("unnamed") {
-        for (field, i) in struct.fields.unnamed {
-            let f = #{};
-            f.vis = parse_vis(field.vis);
-            f.name = "x" + i;
-            f.type = parse_type(field.ty.path.segments[-1].ident);
-            s.fields += f;
-        }
-    }
-
-    return s;
+    return struct;
 }
 
 fn function(func) {
-    let f = #{};
-    f.vis = parse_vis(func.vis);
-    f.original_name = func.ident;
-    f.name = as_pascal_case(func.ident);
+    func.vis = parse_vis(func.vis);
+    func.original_name = func.name;
+    func.name = as_pascal_case(func.name);
 
-    f.inputs = [];
-    for (input, index) in func.inputs {
-        if !input.contains("typed") { continue; }
-        let i = #{};
+    if func.output != () {
+        func.output.name = parse_type(func.output.name);
+    }
 
-        let ident = input.typed.pat.ident;
-        if ident != () {
-            i.name = as_camel_case(ident.ident);
-        } else {
-            i.name = `_`;
+    for (input, i) in func.inputs {
+        let name = as_camel_case(input.name);
+        if is_keyword(name) {
+            throw `cannot use parameter name '${name}' because it is also a csharp keyword`;
         }
 
-        i.type = parse_type(input.typed.ty.path.segments[-1].ident);
-        f.inputs += i;
+        func.inputs[i].name = name;
+        func.inputs[i].type.name = parse_type(input.type.name);
     }
 
-    if func.contains("output") {
-        f.output = parse_type(func.output.path.segments[-1].ident);
-    } else {
-        f.output = "void";
-    }
-
-    return f;
+    return func;
 }
 
 fn parse_vis(vis) {
-    if vis == "pub" { "public" } else { "private" }
+    if vis { "public" } else { "private" }
 }
 
 fn parse_type(type) {
