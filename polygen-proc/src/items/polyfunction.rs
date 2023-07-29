@@ -50,15 +50,11 @@ impl PolyFn {
     pub fn build(mut item: syn::ItemFn) -> (Self, TokenStream) {
         let mut stream = quote!();
 
-        // check for 'extern "C"' abi
+        // add error if the function defines an abi
         match &item.sig.abi {
-            Some(syn::Abi {
-                extern_token: _,
-                name: Some(name),
-            }) if name.value() == format!("C") => (),
-            // add error if there is an ABI that isnt C
             Some(_) => stream.extend(quote_spanned! { item.sig.abi.span() =>
-                compile_error!("Polygen function should not declare an 'extern' abi other than \"C\"");
+                compile_error!("Polygen function should not declare an 'extern' abi. \
+                    Polygen functions will always be 'extern \"C\"'");
             }),
             _ => (),
         }

@@ -16,6 +16,31 @@ impl PolyStruct {
         // create initial stream
         let mut stream = quote!();
 
+        // add error if the structs tries to define its own repr
+        for attr in &item.attrs {
+            use syn::Meta::*;
+            use syn::MetaList;
+            match &attr.meta {
+                List(MetaList {
+                    path,
+                    delimiter: _,
+                    tokens: _,
+                }) => {
+                    if path.to_token_stream().to_string() != "repr" {
+                        continue;
+                    }
+
+                    stream.extend(quote_spanned! { attr.span() =>
+                        compile_error!("Polygen structs should not define a repr. \
+                            Polygen structs will always be 'repr(C)'.");
+                    });
+
+                    break;
+                }
+                _ => (),
+            }
+        }
+
         // force this struct to use #[repr(C)]
         // this will make any other usage an error
         item.attrs.push(syn::parse_quote!(#[repr(C)]));
