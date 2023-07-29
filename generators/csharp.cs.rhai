@@ -26,7 +26,7 @@ fn process(item) {
 
 fn render() {
     // create library template
-    let library = docformat(`
+    let library_items = docformat(`
         public const string NativeLib = "${replace(PACKAGE_NAME, "-", "_")}";
 
         poly-structs
@@ -36,9 +36,9 @@ fn render() {
 
     // replace placeholder text with rendered items
     let structs = utils::render_each(this.structs.values(), "\n\n", |struct| render::struct(struct));
-    let library = replace(library, "poly-structs", structs);
+    let library_items = replace(library_items, "poly-structs", structs);
     let functions = utils::render_each(this.functions.values(), "\n\n", |func| render::function("NativeLib", func));
-    let library = replace(library, "poly-functions", functions);
+    let library_items = replace(library_items, "poly-functions", functions);
 
     // render final output template
     let output = docformat(`
@@ -49,7 +49,7 @@ fn render() {
     `);
 
     // replace placeholder text with rendered static class
-    let static_class = render::static_class(PACKAGE_NAME, library);
+    let static_class = render::static_class(PACKAGE_NAME, library_items);
     let output = replace(output, "poly-static-class", static_class);
 
     // return rendered file with a newline
