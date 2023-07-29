@@ -1,5 +1,5 @@
 #[doc(hidden)]
-pub use polygen_private as __private;
+pub mod __private;
 
 // re-export macro
 #[allow(unused_imports)]

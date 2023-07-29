@@ -4,5 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-polygen-proc = { path = "./crates/polygen-proc" }
-polygen-private = { path = "./crates/polygen-private" }
+polygen-proc = { path = "./polygen-proc" }

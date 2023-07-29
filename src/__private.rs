@@ -5,7 +5,7 @@ pub unsafe trait exported_by_polygen {}
 macro_rules! impl_export {
     ($($t:ty),*) => {
         $(
-            unsafe impl $crate::exported_by_polygen for $t {}
+            unsafe impl $crate::__private::exported_by_polygen for $t {}
         )*
     };
 }
