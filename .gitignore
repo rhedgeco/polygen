@@ -1,7 +1,6 @@
 # Initial ignore for everything.
-# I generally like to do this at the root as a directory whitelist
-# This makes it so that specific includes are not necessary
-# for whatever editor is used to edit the code
+# I generally like to do this at the project root as a directory whitelist
+# This makes it so that specific includes are not necessary for any IDE
 /*
 /*/
 
@@ -23,4 +22,3 @@
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
-
