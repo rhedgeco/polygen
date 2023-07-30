@@ -8,7 +8,7 @@ pub struct NormalStruct {
 
 #[polygen]
 pub struct TestStruct {
-    floater: f64,
+    floater: *mut f64,
     another_float: f32,
 }
 
@@ -21,6 +21,6 @@ pub fn create_struct() -> NormalStruct {
 }
 
 #[polygen]
-pub fn get_item(normal_struct: NormalStruct) -> u32 {
+pub fn get_item(normal_struct: &NormalStruct) -> u32 {
     normal_struct.item
 }

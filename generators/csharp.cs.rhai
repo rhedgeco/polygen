@@ -9,13 +9,13 @@ fn process(item) {
     let key = item.keys()[0];
     let value = item.values()[0];
 
-    if key == "Struct" {
+    if key == "struct" {
         if this.structs.contains(value.name) {
             throw `Cannot export multiple structs with name '${value.name}'`;
         }
 
         this.structs[value.name] = process::struct(value);
-    } else if key == "Fn" { 
+    } else if key == "fn" { 
         if this.functions.contains(value.name) {
             throw `Cannot export multiple functions with name '${value.name}'`;
         }

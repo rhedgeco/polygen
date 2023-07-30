@@ -26,43 +26,132 @@ private fn is_keyword(string) {
 }
 
 fn struct(struct) {
-    struct.vis = parse_vis(struct.vis);
-    struct.name = as_pascal_case(struct.name);
+    let new_struct = #{};
+    new_struct.vis = parse_vis(struct.vis);
+    new_struct.name = as_pascal_case(struct.name);
 
-    for i in 0..struct.fields.len() {
-        let name = as_camel_case(struct.fields[i].name);
+    new_struct.fields = [];
+    for field in struct.fields {
+        let new_field = #{};
+        let name = as_camel_case(field.name);
         if is_keyword(name) {
             throw `cannot use field name '${name}' because it is also a csharp keyword`;
         }
 
-        struct.fields[i].name = name;
-        struct.fields[i].vis = parse_vis(struct.fields[i].vis);
-        struct.fields[i].type.name = parse_type(struct.fields[i].type.name);
+        new_field.name = name;
+        new_field.vis = parse_vis(field.vis);
+        
+        let key = field.type.keys()[0];
+        let value = field.type.values()[0];
+        switch key {
+            "named" => new_field.type = parse_type(value),
+            "ptrmut" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_field.type = `${parse_type(value)}*`,
+                    _ => throw `structs dont support nested pointers. field: '${name}'`,
+                }
+            },
+            "ptrconst" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_field.type = `${parse_type(value)}*`,
+                    _ => throw `structs dont support nested pointers. field: '${name}'`,
+                }
+            },
+            _ => throw `structs dont support reference types. field: '${name}'`,
+        }
+
+        new_struct.fields += new_field;
     }
 
-    return struct;
+    return new_struct;
 }
 
 fn function(func) {
-    func.vis = parse_vis(func.vis);
-    func.original_name = func.name;
-    func.name = as_pascal_case(func.name);
+    let new_func = #{};
+    new_func.vis = parse_vis(func.vis);
+    new_func.original_name = func.name;
+    new_func.name = as_pascal_case(func.name);
 
     if func.output != () {
-        func.output.name = parse_type(func.output.name);
+        let key = func.output.keys()[0];
+        let value = func.output.values()[0];
+        switch key {
+            "named" => new_func.output = parse_type(value),
+            "ptrmut" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_func.output = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer outputs.`,
+                }
+            },
+            "ptrconst" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_func.output = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer outputs.`,
+                }
+            },
+            _ => throw `functions dont support reference outputs.`,
+        }
     }
 
-    for (input, i) in func.inputs {
+    new_func.inputs = [];
+    for input in func.inputs {
+        let new_input = #{};
         let name = as_camel_case(input.name);
         if is_keyword(name) {
             throw `cannot use parameter name '${name}' because it is also a csharp keyword`;
         }
 
-        func.inputs[i].name = name;
-        func.inputs[i].type.name = parse_type(input.type.name);
+        new_input.name = name;
+        let key = input.type.keys()[0];
+        let value = input.type.values()[0];
+        switch key {
+            "named" => new_input.type = parse_type(value),
+            "ptrmut" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer inputs. field: '${name}'`,
+                }
+            },
+            "ptrconst" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer inputs. field: '${name}'`,
+                }
+            },
+            "ref" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `ref readonly ${parse_type(value)}`,
+                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
+                }
+            },
+            "refmut" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `ref ${parse_type(value)}`,
+                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
+                }
+            },
+        }
+
+        new_func.inputs += new_input;
     }
 
-    return func;
+    return new_func;
 }
 
 fn parse_vis(vis) {

@@ -14,8 +14,11 @@ pub type PolyResult<T> = Result<T, quote::__private::TokenStream>;
 
 #[derive(Serialize)]
 pub enum PolyItem {
+    #[serde(rename = "struct")]
     Struct(PolyStruct),
+    #[serde(rename = "fn")]
     Fn(PolyFn),
+    #[serde(rename = "unsupported")]
     Unsupported,
 }
 

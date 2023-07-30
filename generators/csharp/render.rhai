@@ -37,7 +37,7 @@ fn struct(struct) {
 
 private fn struct_field(field) {
     docformat(`
-        ${field.vis} ${field.type.name} ${field.name};
+        ${field.vis} ${field.type} ${field.name};
     `)
 }
 
@@ -46,10 +46,10 @@ fn function(lib_name, func) {
 
     return docformat(`
         [DllImport(${lib_name}, EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
-        ${func.vis} static extern ${func.output.name} ${func.name}(${inputs});
+        ${func.vis} static extern ${func.output} ${func.name}(${inputs});
     `);
 }
 
 private fn function_input(input) {
-    return `${input.type.name} ${input.name}`;
+    return `${input.type} ${input.name}`;
 }
