@@ -1,68 +1,53 @@
-use quote::{__private::TokenStream, quote, quote_spanned, ToTokens};
+use proc_macro2::TokenStream;
+use quote::{quote, quote_spanned, ToTokens};
+use rhai::serde::to_dynamic;
 use serde::Serialize;
 use syn::spanned::Spanned;
 
-use super::PolyField;
+use super::{PolyError, PolyErrorBuilder, PolyField, PolyItem, PolyResult};
 
 #[derive(Serialize)]
 pub struct PolyStruct {
     vis: bool,
     name: String,
+    attrs: Vec<String>,
     fields: Vec<PolyField>,
+
+    #[serde(skip)]
+    assertions: TokenStream,
 }
 
 impl PolyStruct {
-    pub fn build(mut item: syn::ItemStruct) -> (Self, TokenStream) {
-        // create initial stream
-        let mut stream = quote!();
+    pub fn assertions(&self) -> &TokenStream {
+        &self.assertions
+    }
 
-        // add error if the structs tries to define its own repr
-        for attr in &item.attrs {
-            use syn::Meta::*;
-            use syn::MetaList;
-            match &attr.meta {
-                List(MetaList {
-                    path,
-                    delimiter: _,
-                    tokens: _,
-                }) => {
-                    if path.to_token_stream().to_string() != "repr" {
-                        continue;
-                    }
-
-                    stream.extend(quote_spanned! { attr.span() =>
-                        compile_error!("Polygen structs should not define a repr. \
-                            Polygen structs will always be 'repr(C)'.");
-                    });
-
-                    break;
-                }
-                _ => (),
-            }
-        }
-
-        // force this struct to use #[repr(C)]
-        // this will make any other usage an error
-        item.attrs.push(syn::parse_quote!(#[repr(C)]));
-
+    pub fn build(item: &syn::ItemStruct) -> PolyResult<Self> {
         // add error if the struct has generics
         if !item.generics.params.empty_or_trailing() {
-            stream.extend(quote_spanned! { item.generics.params.span() =>
-                compile_error!("Polygen does not support generic structs.");
-            });
+            return Err(PolyError::build(
+                &item.generics.params,
+                "Polygen does not support generic structs.",
+            ));
         }
+
+        // create assertion stream for the struct
+        let mut assertions = TokenStream::new();
 
         // impl the 'exported_by_polygen' trait for this struct
         let name = &item.ident;
-        stream.extend(quote! {
+        assertions.extend(quote! {
             unsafe impl polygen::__private::exported_by_polygen for #name {}
         });
+
+        // create error builder
+        let mut errors = PolyErrorBuilder::new();
 
         // build fields and assert that all fields are also exported by polygen
         let mut fields = Vec::new();
         for (index, field) in item.fields.iter().enumerate() {
             let ty = &field.ty;
-            stream.extend(quote_spanned! { field.span() =>
+            assertions.extend(quote_spanned! { field.span() =>
                 const _: fn() = || {
                     fn __assert_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
                     fn __accept_exported(_item: #ty) { __assert_exported(_item); }
@@ -71,20 +56,26 @@ impl PolyStruct {
 
             match PolyField::new(index, field) {
                 Ok(field) => fields.push(field),
-                Err(error) => stream.extend(error),
+                Err(error) => errors.merge(error),
             }
         }
 
-        // append item to the end of the stream
-        stream.extend(quote!( #item ));
+        // fork if there are any errors
+        errors.fork()?;
 
-        (
-            Self {
-                vis: item.vis.to_token_stream().to_string() == "pub",
-                name: item.ident.to_string(),
-                fields,
-            },
-            stream,
-        )
+        // collect the attributes into a string list
+        let mut attrs = Vec::new();
+        for attr in &item.attrs {
+            attrs.push(attr.meta.to_token_stream().to_string());
+        }
+
+        // return the poly struct
+        Ok(Self {
+            vis: item.vis.to_token_stream().to_string() == "pub",
+            name: item.ident.to_string(),
+            attrs,
+            fields,
+            assertions,
+        })
     }
 }

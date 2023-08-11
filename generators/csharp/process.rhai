@@ -30,6 +30,16 @@ fn struct(struct) {
     new_struct.vis = parse_vis(struct.vis);
     new_struct.name = as_pascal_case(struct.name);
 
+    // check if struct is repr(C)
+    let is_repr = false;
+    for attr in struct.attrs {
+        if attr == "repr(C)" { is_repr = true; }
+    }
+
+    if !is_repr {
+        throw "struct must have attribute '#[repr(C)]'";
+    }
+
     new_struct.fields = [];
     for field in struct.fields {
         let new_field = #{};
@@ -45,7 +55,7 @@ fn struct(struct) {
         let value = field.type.values()[0];
         switch key {
             "named" => new_field.type = parse_type(value),
-            "ptrmut" => {
+            "mutptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
@@ -53,7 +63,7 @@ fn struct(struct) {
                     _ => throw `structs dont support nested pointers. field: '${name}'`,
                 }
             },
-            "ptrconst" => {
+            "constptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
@@ -76,12 +86,27 @@ fn function(func) {
     new_func.original_name = func.name;
     new_func.name = as_pascal_case(func.name);
 
+    // check if function has extern "C"
+    if func.abi != "\"C\"" {
+        throw "function abi must be extern \"C\"";
+    }
+
+    // check if function has no_mangle
+    let no_mangle = false;
+    for attr in func.attrs {
+        if attr == "no_mangle" { no_mangle = true; }
+    }
+
+    if !no_mangle {
+        throw "function must have attribute '#[no_mangle]'";
+    }
+
     if func.output != () {
         let key = func.output.keys()[0];
         let value = func.output.values()[0];
         switch key {
             "named" => new_func.output = parse_type(value),
-            "ptrmut" => {
+            "mutptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
@@ -89,7 +114,7 @@ fn function(func) {
                     _ => throw `functions dont support nested pointer outputs.`,
                 }
             },
-            "ptrconst" => {
+            "constptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
@@ -114,7 +139,7 @@ fn function(func) {
         let value = input.type.values()[0];
         switch key {
             "named" => new_input.type = parse_type(value),
-            "ptrmut" => {
+            "mutptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
@@ -122,7 +147,7 @@ fn function(func) {
                     _ => throw `functions dont support nested pointer inputs. field: '${name}'`,
                 }
             },
-            "ptrconst" => {
+            "constptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
@@ -130,22 +155,7 @@ fn function(func) {
                     _ => throw `functions dont support nested pointer inputs. field: '${name}'`,
                 }
             },
-            "ref" => {
-                let key = value.keys()[0];
-                let value = value.values()[0];
-                switch key {
-                    "named" => new_input.type = `ref readonly ${parse_type(value)}`,
-                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
-                }
-            },
-            "refmut" => {
-                let key = value.keys()[0];
-                let value = value.values()[0];
-                switch key {
-                    "named" => new_input.type = `ref ${parse_type(value)}`,
-                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
-                }
-            },
+            _ => throw `functions dont support reference inputs.`,
         }
 
         new_func.inputs += new_input;

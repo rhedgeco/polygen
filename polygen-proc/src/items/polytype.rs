@@ -1,8 +1,8 @@
-use quote::{__private::TokenStream, quote_spanned, ToTokens};
+use quote::ToTokens;
 use serde::Serialize;
 use syn::spanned::Spanned;
 
-use super::PolyResult;
+use super::{PolyError, PolyResult};
 
 #[derive(Serialize)]
 pub enum PolyType {
@@ -10,11 +10,11 @@ pub enum PolyType {
     Named(String),
     #[serde(rename = "ref")]
     Ref(Box<PolyType>),
-    #[serde(rename = "refmut")]
+    #[serde(rename = "mutref")]
     RefMut(Box<PolyType>),
-    #[serde(rename = "ptrmut")]
+    #[serde(rename = "mutptr")]
     PtrMut(Box<PolyType>),
-    #[serde(rename = "ptrconst")]
+    #[serde(rename = "constptr")]
     PtrConst(Box<PolyType>),
 }
 
@@ -49,8 +49,6 @@ impl PolyType {
     }
 }
 
-fn bad_type(span: &impl Spanned) -> TokenStream {
-    quote_spanned! {span.span() =>
-        compile_error!("This type is not supported by polygen.");
-    }
+fn bad_type(span: &impl Spanned) -> PolyError {
+    PolyError::build(span, "This type is not supported by polygen.")
 }

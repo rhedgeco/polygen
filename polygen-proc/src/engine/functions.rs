@@ -1,4 +1,5 @@
 use indent::indent_all_by;
+use regex::Regex;
 
 pub fn indent(spaces: i64, string: &str) -> String {
     indent_all_by(spaces as usize, string)
@@ -38,6 +39,11 @@ pub fn as_train_case(string: &str) -> String {
 
 pub fn as_title_case(string: &str) -> String {
     heck::AsTitleCase(string).to_string()
+}
+
+pub fn regex_match(string: &str, regex: &str) -> bool {
+    let Ok(regex) = Regex::new(regex) else { return false };
+    regex.is_match(string)
 }
 
 pub fn docformat(string: &str) -> String {

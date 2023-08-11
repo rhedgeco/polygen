@@ -1,7 +1,7 @@
 use quote::ToTokens;
 use serde::Serialize;
 
-use super::{PolyResult, PolyType};
+use super::{PolyError, PolyType};
 
 #[derive(Serialize)]
 pub struct PolyField {
@@ -11,7 +11,7 @@ pub struct PolyField {
 }
 
 impl PolyField {
-    pub fn new(index: usize, field: &syn::Field) -> PolyResult<Self> {
+    pub fn new(index: usize, field: &syn::Field) -> Result<Self, PolyError> {
         let vis = field.vis.to_token_stream().to_string() == "pub";
         let name = match &field.ident {
             Some(ident) => ident.to_string(),

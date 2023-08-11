@@ -2,26 +2,22 @@ import "utils/utils" as utils;
 import "csharp/render" as render;
 import "csharp/process" as process;
 
-fn process(item) {
+fn struct(struct) {
     if this.structs == () { this.structs = #{}; }
+    if this.structs.contains(struct.name) {
+        throw `Cannot export multiple structs with name '${struct.name}'`;
+    }
+
+    this.structs[struct.name] = process::struct(struct);
+}
+
+fn function(function) {
     if this.functions == () { this.functions = #{}; }
+    if this.functions.contains(function.name) {
+        throw `Cannot export multiple structs with name '${struct.name}'`;
+    }
 
-    let key = item.keys()[0];
-    let value = item.values()[0];
-
-    if key == "struct" {
-        if this.structs.contains(value.name) {
-            throw `Cannot export multiple structs with name '${value.name}'`;
-        }
-
-        this.structs[value.name] = process::struct(value);
-    } else if key == "fn" { 
-        if this.functions.contains(value.name) {
-            throw `Cannot export multiple functions with name '${value.name}'`;
-        }
-
-        this.functions[value.name] = process::function(value);
-    } else { throw "This item is unsupported by c-sharp"; }
+    this.functions[function.name] = process::function(function);
 }
 
 fn render() {

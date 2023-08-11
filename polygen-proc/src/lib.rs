@@ -1,109 +1,59 @@
 mod engine;
 mod items;
 
-extern crate proc_macro;
-
-use std::{fs, path::PathBuf};
-
-use engine::{EngineError, PolyEngine};
-use once_cell::sync::Lazy;
+use engine::PolyEngine;
+use items::PolyItem;
 use proc_macro::TokenStream;
 use quote::quote;
-use rhai::serde::to_dynamic;
-
-use crate::items::PolyItem;
-
-const SCRIPT_DIR: &str = "./polygen";
-const BUILD_DIR: &str = "./target/polygen";
-static ENGINE: Lazy<Result<PolyEngine, EngineError>> = Lazy::new(|| PolyEngine::load(SCRIPT_DIR));
 
 #[proc_macro_attribute]
 pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    // parse the item
+    // get the item and parse it, returning an error on failure
     let item = syn::parse_macro_input!(item as syn::Item);
-
-    // ensure engine is successfully loaded
-    let engine = match ENGINE.as_ref() {
-        Ok(engine) => engine,
+    let polyitem = match PolyItem::build(&item) {
+        Ok(polyitem) => polyitem,
         Err(error) => {
-            let message = format!("Polygen Load Error: {error}");
+            let stream = error.stream();
             return quote! {
-                compile_error!(#message);
+                #stream
                 #item
             }
             .into();
         }
     };
 
-    // build the item
-    let (item, mut stream) = PolyItem::build(item);
+    // get the processed assertions
+    let assertions = polyitem.assertions();
 
-    // early exit if the item is unsupported
-    if let PolyItem::Unsupported = item {
-        return quote! {
-            compile_error!("This item is unsupported by polygen.");
-            #stream
-        }
-        .into();
-    }
-
-    // convert item into dynamic for use in scripts
-    let dynamic = match to_dynamic(item) {
-        Ok(dynamic) => dynamic,
+    // get the engine instance and return an error if it failed
+    let engine = match PolyEngine::get_instance() {
+        Ok(engine) => engine,
         Err(error) => {
-            let message = format!("Polygen Dynamic Conversion Error: {error}");
             return quote! {
-                compile_error!(#message);
-                #stream
+                #assertions
+                #error
+                #item
             }
             .into();
         }
     };
 
-    // loop over all scripts
-    for script in engine.scripts() {
-        let script_name = script.name();
-
-        // process the item
-        if let Err(mut error) = script.process(dynamic.clone()) {
-            // unwrap error to get to root error
-            use rhai::EvalAltResult::*;
-            while let ErrorInFunctionCall(_, _, inner, _) = *error {
-                error = inner;
-            }
-
-            // process runtime errors to make them prettier
-            let error = match *error {
-                ErrorRuntime(e, _) => format!("{e}"),
-                error => format!("{error}"),
-            };
-
-            // combine output with new error message
-            let message = format!("'{script_name}' - {error}");
-            stream.extend(quote!(compile_error!(#message);))
+    // process the polyitem using the engine
+    if let Err(error) = engine.process(&polyitem) {
+        let error = error.stream();
+        return quote! {
+            #assertions
+            #error
+            #item
         }
-
-        // render all the items
-        match script.render() {
-            Ok(contents) => {
-                if let Err(error) = fs::create_dir_all(BUILD_DIR) {
-                    let message = format!("'{script_name}' - {error}");
-                    stream.extend(quote!(compile_error!(#message);))
-                }
-
-                let file_path = PathBuf::from(BUILD_DIR).join(script_name);
-                if let Err(error) = fs::write(file_path, contents) {
-                    let message = format!("'{script_name}' - {error}");
-                    stream.extend(quote!(compile_error!(#message);))
-                }
-            }
-            Err(error) => {
-                let message = format!("'{script_name}' - {error}");
-                stream.extend(quote!(compile_error!(#message);))
-            }
-        }
+        .into();
     }
 
-    // return the token stream
-    stream.into()
+    // return the original item with the processed assertions
+    let assertions = polyitem.assertions();
+    quote! {
+        #assertions
+        #item
+    }
+    .into()
 }
