@@ -41,7 +41,7 @@ impl PolyEngine {
         let mut engine = rhai::Engine::new();
 
         engine
-            .set_max_expr_depths(32, 32) // idk this felt right lol
+            .set_max_expr_depths(0, 0)
             .register_fn("indent", functions::indent)
             .register_fn("replace", functions::replace)
             .register_fn("as_camel_case", functions::as_camel_case)
@@ -86,7 +86,10 @@ impl PolyEngine {
     }
 
     pub fn process(&self, item: &PolyItem) -> PolyResult<()> {
+        // create error builder
         let mut errors = PolyErrorBuilder::new();
+
+        // process the item using every script
         for script in &self.scripts {
             if let Err(mut error) = script.process(item) {
                 // loop unwrap error to get to root error
@@ -103,11 +106,30 @@ impl PolyEngine {
 
                 // combine output with new error message
                 let message = format!("{} - {}", script.name(), error);
-                errors.merge(PolyError::simple(message))
+                errors.merge(PolyError::simple(message));
             }
         }
 
+        // fork before rendering if there are any script errors
         errors.fork()?;
+
+        // render using each script and save to disk
+        for script in &self.scripts {
+            let script_name = script.name();
+            let contents = match script.render() {
+                Ok(contents) => contents,
+                Err(error) => {
+                    let message = format!("{script_name} - {error}");
+                    return Err(PolyError::simple(message));
+                }
+            };
+
+            // write the file to disk
+            fs::create_dir_all(OUTPUT_DIR).unwrap();
+            let path = PathBuf::from(OUTPUT_DIR).join(script_name);
+            fs::write(&path, contents).unwrap();
+        }
+
         Ok(())
     }
 }
