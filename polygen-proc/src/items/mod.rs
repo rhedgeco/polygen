@@ -1,10 +1,12 @@
 mod polyfield;
 mod polyfunction;
+mod polyimpl;
 mod polystruct;
 mod polytype;
 
 pub use polyfield::*;
 pub use polyfunction::*;
+pub use polyimpl::*;
 pub use polystruct::*;
 pub use polytype::*;
 
@@ -70,14 +72,16 @@ impl PolyError {
 pub enum PolyItem {
     Struct(PolyStruct),
     Fn(PolyFn),
+    Impl(PolyImpl),
 }
 
 impl PolyItem {
-    pub fn build(item: &mut syn::Item) -> PolyResult<Self> {
+    pub fn build(item: &syn::Item) -> PolyResult<Self> {
         use syn::Item::*;
         match item {
             Struct(item) => Ok(Self::Struct(PolyStruct::build(item)?)),
             Fn(item) => Ok(Self::Fn(PolyFn::build(item)?)),
+            Impl(item) => Ok(Self::Impl(PolyImpl::build(item)?)),
             _ => Err(PolyError::simple("This item is unsupported by polygen")),
         }
     }
@@ -92,6 +96,10 @@ impl PolyItem {
                 "function",
                 to_dynamic(item).expect("Internal Error: Function dynamic conversion."),
             ),
+            Self::Impl(item) => (
+                "impl",
+                to_dynamic(item).expect("Internal Error: Impl dynamic conversion."),
+            ),
         }
     }
 
@@ -99,6 +107,7 @@ impl PolyItem {
         match self {
             Self::Struct(item) => item.assertions(),
             Self::Fn(item) => item.assertions(),
+            Self::Impl(item) => item.assertions(),
         }
     }
 }
