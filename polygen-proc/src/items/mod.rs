@@ -73,7 +73,7 @@ pub enum PolyItem {
 }
 
 impl PolyItem {
-    pub fn build(item: &syn::Item) -> PolyResult<Self> {
+    pub fn build(item: &mut syn::Item) -> PolyResult<Self> {
         use syn::Item::*;
         match item {
             Struct(item) => Ok(Self::Struct(PolyStruct::build(item)?)),
