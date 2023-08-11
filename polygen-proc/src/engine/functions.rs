@@ -5,7 +5,7 @@ pub fn indent(spaces: i64, string: &str) -> String {
     indent_all_by(spaces as usize, string)
 }
 
-pub fn replace<'a>(string: &str, from: &str, to: &str) -> String {
+pub fn replace(string: &str, from: &str, to: &str) -> String {
     string.replace(from, to)
 }
 

@@ -68,7 +68,7 @@ impl PolyScript {
     ) -> Result<T, Box<rhai::EvalAltResult>> {
         let mut store_guard = self.store.lock().unwrap();
         let mut scope = rhai::Scope::new();
-        scope.push_constant("PACKAGE_NAME", &*PACKAGE_NAME);
+        scope.push_constant("PACKAGE_NAME", PACKAGE_NAME.to_string());
         self.engine.call_fn_with_options(
             rhai::CallFnOptions::new().bind_this_ptr(&mut *store_guard),
             &mut scope,

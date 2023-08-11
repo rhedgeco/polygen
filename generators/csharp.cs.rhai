@@ -5,7 +5,7 @@ import "csharp/process" as process;
 fn struct(struct) {
     if this.structs == () { this.structs = #{}; }
     if this.structs.contains(struct.name) {
-        throw `Cannot export multiple structs with name '${struct.name}'`;
+        throw `Cannot export multiple structs with the name '${struct.name}'`;
     }
 
     this.structs[struct.name] = process::struct(struct);
@@ -14,13 +14,17 @@ fn struct(struct) {
 fn function(function) {
     if this.functions == () { this.functions = #{}; }
     if this.functions.contains(function.name) {
-        throw `Cannot export multiple structs with name '${struct.name}'`;
+        throw `Cannot export multiple functions with the name '${function.name}'`;
     }
 
     this.functions[function.name] = process::function(function);
 }
 
 fn render() {
+    // ensure all items exist
+    if this.structs == () { this.structs = #{}; }
+    if this.functions == () { this.functions = #{}; }
+
     // create library template
     let library_items = docformat(`
         public const string NativeLib = "${replace(PACKAGE_NAME, "-", "_")}";
