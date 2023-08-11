@@ -1,11 +1,10 @@
 use quote::{__private::TokenStream, quote_spanned, ToTokens};
-use rhai::serde::to_dynamic;
 use serde::Serialize;
 use syn::spanned::Spanned;
 
 use crate::items::{PolyError, PolyErrorBuilder};
 
-use super::{PolyItem, PolyResult, PolyType};
+use super::{PolyResult, PolyType};
 
 #[derive(Serialize)]
 struct FnArg {

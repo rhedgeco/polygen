@@ -1,10 +1,9 @@
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned, ToTokens};
-use rhai::serde::to_dynamic;
 use serde::Serialize;
 use syn::spanned::Spanned;
 
-use super::{PolyError, PolyErrorBuilder, PolyField, PolyItem, PolyResult};
+use super::{PolyError, PolyErrorBuilder, PolyField, PolyResult};
 
 #[derive(Serialize)]
 pub struct PolyStruct {
