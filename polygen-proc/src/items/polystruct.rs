@@ -1,9 +1,8 @@
 use proc_macro2::TokenStream;
-use quote::{quote, quote_spanned, ToTokens};
+use quote::{quote, ToTokens};
 use serde::Serialize;
-use syn::spanned::Spanned;
 
-use super::{PolyError, PolyErrorBuilder, PolyField, PolyResult};
+use super::{assert_type_exported, PolyError, PolyErrorBuilder, PolyField, PolyResult};
 
 #[derive(Serialize)]
 pub struct PolyStruct {
@@ -46,12 +45,7 @@ impl PolyStruct {
         let mut fields = Vec::new();
         for (index, field) in item.fields.iter().enumerate() {
             let ty = &field.ty;
-            assertions.extend(quote_spanned! { field.span() =>
-                const _: fn() = || {
-                    fn __assert_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
-                    fn __accept_exported(_item: #ty) { __assert_exported(_item); }
-                };
-            });
+            assertions.extend(assert_type_exported(ty));
 
             match PolyField::new(index, field) {
                 Ok(field) => fields.push(field),

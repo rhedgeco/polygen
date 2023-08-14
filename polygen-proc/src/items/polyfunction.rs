@@ -1,8 +1,7 @@
-use quote::{__private::TokenStream, quote_spanned, ToTokens};
+use quote::{ToTokens, __private::TokenStream};
 use serde::Serialize;
-use syn::spanned::Spanned;
 
-use crate::items::{PolyError, PolyErrorBuilder};
+use crate::items::{assert_type_exported, PolyError, PolyErrorBuilder};
 
 use super::{PolyResult, PolyType};
 
@@ -75,12 +74,7 @@ impl PolyFn {
         // assert that output type is exported by polygen
         use syn::ReturnType::*;
         if let Type(_, ty) = &item.sig.output {
-            assertions.extend(quote_spanned! { ty.span() =>
-                const _: fn() = || {
-                    fn __assert_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
-                    fn __accept_exported(_item: #ty) { __assert_exported(_item); }
-                };
-            });
+            assertions.extend(assert_type_exported(ty));
         }
 
         // create error builder
@@ -110,12 +104,7 @@ impl PolyFn {
             match input {
                 Typed(typed) => {
                     let ty = &typed.ty;
-                    assertions.extend(quote_spanned! { ty.span() =>
-                        const _: fn() = || {
-                            fn __assert_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
-                            fn __accept_exported(_item: #ty) { __assert_exported(_item); }
-                        };
-                    });
+                    assertions.extend(assert_type_exported(ty));
                 }
                 _ => (),
             }

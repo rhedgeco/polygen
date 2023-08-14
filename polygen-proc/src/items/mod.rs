@@ -3,12 +3,14 @@ mod polyfunction;
 mod polyimpl;
 mod polystruct;
 mod polytype;
+mod utils;
 
 pub use polyfield::*;
 pub use polyfunction::*;
 pub use polyimpl::*;
 pub use polystruct::*;
 pub use polytype::*;
+pub use utils::*;
 
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
