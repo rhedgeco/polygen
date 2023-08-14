@@ -25,7 +25,7 @@ fn static_class(name, inner) {
 fn struct(struct) {
     let tmp = docformat(`
         [StructLayout(LayoutKind.Sequential)]
-        ${struct.vis} struct ${struct.name}
+        ${struct.vis} partial struct ${struct.name}
         {
         polygen-inner
         }
