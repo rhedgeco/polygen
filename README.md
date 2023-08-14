@@ -2,23 +2,25 @@
 
 Polygen is a polyglot binding generator for `rust`. It leverages the power of the type system to validate and generate bindings for your language of choice at compile time.
 
-It is extensible via a powerful scripting engine, encouraging you to add or modify any bindings to your specification.
+It is extensible via a powerful scripting engine, encouraging you to add or modify any bindings to your specification and provide compile time errors if something is unsupported.
 
 # Usage
 
-Just tag an item you would like to export with `#[polygen]` and the rest will be taken care of! If something you are trying to export is incompatible with FFI, polygen will let you know!
+Just tag an item you would like to export with `#[polygen]` and the rest will be taken care of!
 
 ```rust
 use polygen::polygen;
 
 #[polygen]
+#[repr(C)]
 pub struct NormalStruct {
     item: u32,
     another_item: bool,
 }
 
 #[polygen]
-pub fn create_struct() -> NormalStruct {
+#[no_mangle]
+pub extern "C" fn create_struct() -> NormalStruct {
     NormalStruct {
         item: 42,
         another_item: true,
@@ -26,7 +28,8 @@ pub fn create_struct() -> NormalStruct {
 }
 
 #[polygen]
-pub fn get_item(normal_struct: NormalStruct) -> u32 {
+#[no_mangle]
+pub extern "C" fn get_item(normal_struct: &NormalStruct) -> u32 {
     normal_struct.item
 }
 
@@ -38,12 +41,12 @@ Using the c-sharp [generator](#generators) the above translates to:
 using System;
 using System.Runtime.InteropServices;
 
-public static partial class SimpleLib
+public static partial class ComplexLib
 {
-    public const string NativeLib = "simple_lib";
+    public const string NativeLib = "complex_lib";
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct NormalStruct
+    public partial struct NormalStruct
     {
         private uint item;
         private bool anotherItem;
@@ -53,7 +56,7 @@ public static partial class SimpleLib
     public static extern NormalStruct CreateStruct();
 
     [DllImport(NativeLib, EntryPoint = "get_item", CallingConvention = CallingConvention.Cdecl)]
-    public static extern uint GetItem(NormalStruct normalStruct);
+    public static extern uint GetItem(ref readonly NormalStruct normalStruct);
 }
 
 ```
