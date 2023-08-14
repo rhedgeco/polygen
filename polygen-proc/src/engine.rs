@@ -91,21 +91,33 @@ impl PolyEngine {
 
         // process the item using every script
         for script in &self.scripts {
-            if let Err(mut error) = script.process(item) {
-                // loop unwrap error to get to root error
+            if let Err(error) = script.process(item) {
                 use rhai::EvalAltResult::*;
-                while let ErrorInFunctionCall(_, _, inner, _) = *error {
-                    error = inner;
-                }
+                let error_message = match *error {
+                    // if the function was not found, create readable error
+                    ErrorFunctionNotFound(name, _) => format!(
+                        "Cannot process item. \
+                        Missing function with with signature '{name}(item)'."
+                    ),
+                    // if the error is nested, un-roll it to get to the root
+                    error @ ErrorInFunctionCall(_, _, _, _) => {
+                        let mut inner_error = &error;
+                        while let ErrorInFunctionCall(_, _, inner, _) = inner_error {
+                            inner_error = &**inner;
+                        }
 
-                // process runtime errors to make them prettier
-                let error = match *error {
-                    ErrorRuntime(e, _) => format!("{e}"),
+                        // format runtime errors without context to make errors prettier
+                        match inner_error {
+                            ErrorRuntime(e, _) => format!("{e}"),
+                            _ => format!("{error}"),
+                        }
+                    }
                     error => format!("{error}"),
                 };
 
                 // combine output with new error message
-                let message = format!("{} - {}", script.name(), error);
+                let script_name = script.name();
+                let message = format!("{script_name} - {error_message}");
                 errors.merge(PolyError::simple(message));
             }
         }
