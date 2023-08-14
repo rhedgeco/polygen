@@ -43,7 +43,7 @@ using System.Runtime.InteropServices;
 
 public static partial class ComplexLib
 {
-    public const string NativeLib = "complex_lib";
+    public const string NativeLib = "simple_lib";
 
     [StructLayout(LayoutKind.Sequential)]
     public partial struct NormalStruct
