@@ -1,13 +1,4 @@
-fn default_imports() {
-    docformat(`
-        using System;
-        using System.Runtime.InteropServices;
-    `)
-}
-
-fn constant(name, type, value) {
-    return `public const ${type} ${name} = ${value};`;
-}
+import "utils/utils" as utils;
 
 fn namespace(name, inner) {
     let tmp = docformat(`
@@ -31,33 +22,27 @@ fn static_class(name, inner) {
     return replace(tmp, "polygen-inner", indent(4, inner));
 }
 
-fn item(item) {
-    if item.type == "struct" { return struct(item); }
-    else { return `// Item ${item.type} is unimplemented.` }
-}
-
-
 fn struct(struct) {
     let tmp = docformat(`
         [StructLayout(LayoutKind.Sequential)]
-        ${struct.vis} struct ${struct.name}
+        ${struct.vis} partial struct ${struct.name}
         {
         polygen-inner
         }
     `);
     
-    let fields = each(struct.fields, "\n", struct_field);
+    let fields = utils::render_each(struct.fields, "\n", struct_field);
     return replace(tmp, "polygen-inner", indent(4, fields));
 }
 
-fn struct_field(field) {
+private fn struct_field(field) {
     docformat(`
         ${field.vis} ${field.type} ${field.name};
     `)
 }
 
 fn function(lib_name, func) {
-    let inputs = each(func.inputs, ", ", function_input);
+    let inputs = utils::render_each(func.inputs, ", ", function_input);
 
     return docformat(`
         [DllImport(${lib_name}, EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
@@ -65,17 +50,6 @@ fn function(lib_name, func) {
     `);
 }
 
-fn function_input(input) {
+private fn function_input(input) {
     return `${input.type} ${input.name}`;
-}
-
-fn each(items, seperator, function) {
-    if items.len() == 0 { return ""; }
-    let output = "";
-    output += function.call(items[0]);
-    for i in 1..items.len() {
-        let item = items[i];
-        output += seperator + function.call(item);
-    }
-    return output;
 }

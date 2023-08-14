@@ -1,80 +1,187 @@
+private fn is_keyword(string) {
+    const KEYWORDS = [
+        "abstract", "as", "base", "bool", "break",
+        "byte", "case", "catch", "char", "checked",
+        "class", "const", "continue", "decimal", "default",
+        "delegate", "do", "double", "else", "enum",
+        "event", "explicit", "extern", "false", "finally",
+        "fixed", "float", "for", "foreach", "goto",
+        "if", "implicit", "in", "int", "interface",
+        "internal", "is", "lock", "long", "namespace",
+        "new", "null", "object", "operator", "out",
+        "override", "params", "private", "protected", "public",
+        "readonly", "ref", "return", "sbyte", "sealed",
+        "short", "sizeof", "stackalloc", "static",
+        "string", "struct", "switch", "this", "throw",
+        "true", "try", "typeof", "uint", "ulong",
+        "unchecked", "unsafe", "ushort", "using",
+        "virtual", "void", "volatile", "while"
+    ];
+
+    if KEYWORDS.contains(string) {
+        return true;
+    }
+
+    return false;
+}
+
 fn struct(struct) {
-    // fail on unit structs
-    if struct.fields.contains("unit") {
-        throw "unit structs are not supported";
-    }
+    let new_struct = #{};
+    new_struct.vis = parse_vis(struct.vis);
+    new_struct.name = as_pascal_case(struct.name);
 
-    // TODO: allow for align and packed. csharp seems to have the tools to make this happen
-    // reject strust if it specifies alignment or packed
-    // anything else will be caught by the compiler for being ffi unsafe
+    // check if struct is repr(C)
+    let is_repr = false;
     for attr in struct.attrs {
-        for token in attr.meta?.list?.tokens {
-            if token.ident == "align" { throw "structs must not have an 'align' specified"; }
-            if token.ident == "packed" { throw "structs must not have 'packed' specified"; }
-        }
-    }
-    
-    let s = #{};
-    s.vis = parse_vis(struct.vis);
-    s.name = as_pascal_case(struct.ident);
-
-    s.fields = [];
-    if struct.fields.contains("named") {
-        for field in struct.fields.named {
-            let f = #{};
-            f.vis = parse_vis(field.vis);
-            f.name = as_camel_case(field.ident);
-            f.type = parse_type(field.ty.path.segments[-1].ident);
-            s.fields += f;
-        }
+        if attr == "repr(C)" { is_repr = true; }
     }
 
-    if struct.fields.contains("unnamed") {
-        for (field, i) in struct.fields.unnamed {
-            let f = #{};
-            f.vis = parse_vis(field.vis);
-            f.name = "x" + i;
-            f.type = parse_type(field.ty.path.segments[-1].ident);
-            s.fields += f;
-        }
+    if !is_repr {
+        throw "struct must have attribute '#[repr(C)]'";
     }
 
-    return s;
+    new_struct.fields = [];
+    for field in struct.fields {
+        let new_field = #{};
+        let name = as_camel_case(field.name);
+        if is_keyword(name) {
+            throw `cannot use field name '${name}' because it is also a csharp keyword`;
+        }
+
+        new_field.name = name;
+        new_field.vis = parse_vis(field.vis);
+        
+        let key = field.type.keys()[0];
+        let value = field.type.values()[0];
+        switch key {
+            "named" => new_field.type = parse_type(value),
+            "mutptr" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_field.type = `${parse_type(value)}*`,
+                    _ => throw `structs dont support nested pointers. field: '${name}'`,
+                }
+            },
+            "constptr" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_field.type = `${parse_type(value)}*`,
+                    _ => throw `structs dont support nested pointers. field: '${name}'`,
+                }
+            },
+            _ => throw `structs dont support reference types. field: '${name}'`,
+        }
+
+        new_struct.fields += new_field;
+    }
+
+    return new_struct;
 }
 
 fn function(func) {
-    let f = #{};
-    f.vis = parse_vis(func.vis);
-    f.original_name = func.ident;
-    f.name = as_pascal_case(func.ident);
+    let new_func = #{};
+    new_func.vis = parse_vis(func.vis);
+    new_func.original_name = func.name;
+    new_func.name = as_pascal_case(func.name);
 
-    f.inputs = [];
-    for (input, index) in func.inputs {
-        if !input.contains("typed") { continue; }
-        let i = #{};
+    // check if function has extern "C"
+    if func.abi != "\"C\"" {
+        throw "function abi must be extern \"C\"";
+    }
 
-        let ident = input.typed.pat.ident;
-        if ident != () {
-            i.name = as_camel_case(ident.ident);
-        } else {
-            i.name = `_`;
+    // check if function has no_mangle
+    let no_mangle = false;
+    for attr in func.attrs {
+        if attr == "no_mangle" { no_mangle = true; }
+    }
+
+    if !no_mangle {
+        throw "function must have attribute '#[no_mangle]'";
+    }
+
+    if func.output != () {
+        let key = func.output.keys()[0];
+        let value = func.output.values()[0];
+        switch key {
+            "named" => new_func.output = parse_type(value),
+            "mutptr" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_func.output = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer outputs.`,
+                }
+            },
+            "constptr" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_func.output = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer outputs.`,
+                }
+            },
+            _ => throw `functions dont support reference outputs.`,
+        }
+    }
+
+    new_func.inputs = [];
+    for input in func.inputs {
+        let new_input = #{};
+        let name = as_camel_case(input.name);
+        if is_keyword(name) {
+            throw `cannot use parameter name '${name}' because it is also a csharp keyword`;
         }
 
-        i.type = parse_type(input.typed.ty.path.segments[-1].ident);
-        f.inputs += i;
+        new_input.name = name;
+        let key = input.type.keys()[0];
+        let value = input.type.values()[0];
+        switch key {
+            "named" => new_input.type = parse_type(value),
+            "ref" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `ref readonly ${parse_type(value)}`,
+                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
+                }
+            }
+            "refmut" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `ref ${parse_type(value)}`,
+                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
+                }
+            }
+            "mutptr" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer inputs. field: '${name}'`,
+                }
+            },
+            "constptr" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `${parse_type(value)}*`,
+                    _ => throw `functions dont support nested pointer inputs. field: '${name}'`,
+                }
+            },
+            _ => throw `functions dont support reference inputs.`,
+        }
+
+        new_func.inputs += new_input;
     }
 
-    if func.contains("output") {
-        f.output = parse_type(func.output.path.segments[-1].ident);
-    } else {
-        f.output = "void";
-    }
-
-    return f;
+    return new_func;
 }
 
 fn parse_vis(vis) {
-    if vis == "pub" { "public" } else { "private" }
+    if vis { "public" } else { "private" }
 }
 
 fn parse_type(type) {
