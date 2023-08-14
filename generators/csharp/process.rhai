@@ -139,6 +139,22 @@ fn function(func) {
         let value = input.type.values()[0];
         switch key {
             "named" => new_input.type = parse_type(value),
+            "ref" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `ref readonly ${parse_type(value)}`,
+                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
+                }
+            }
+            "refmut" => {
+                let key = value.keys()[0];
+                let value = value.values()[0];
+                switch key {
+                    "named" => new_input.type = `ref ${parse_type(value)}`,
+                    _ => throw `functions dont support nested reference inputs. field: '${name}'`,
+                }
+            }
             "mutptr" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];

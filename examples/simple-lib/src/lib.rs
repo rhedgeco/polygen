@@ -32,7 +32,7 @@ pub extern "C" fn create_struct() -> NormalStruct {
 
 #[polygen]
 #[no_mangle]
-pub extern "C" fn get_normal_item(normal_struct: NormalStruct) -> u32 {
+pub extern "C" fn get_normal_item(normal_struct: &NormalStruct) -> u32 {
     normal_struct.item
 }
 
