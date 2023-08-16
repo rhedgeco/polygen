@@ -13,24 +13,21 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let polyitem = match PolyItem::build(&item) {
         Ok(polyitem) => polyitem,
         Err(error) => {
-            let stream = error.stream();
+            let error = error.stream();
             return quote! {
-                #stream
+                #error
                 #item
             }
             .into();
         }
     };
 
-    // get the processed assertions
-    let assertions = polyitem.assertions();
-
     // get the engine instance and return an error if it failed
     let engine = match PolyEngine::get_instance() {
         Ok(engine) => engine,
         Err(error) => {
             return quote! {
-                #assertions
+                #polyitem
                 #error
                 #item
             }
@@ -42,17 +39,15 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     if let Err(error) = engine.process(&polyitem) {
         let error = error.stream();
         return quote! {
-            #assertions
+            #polyitem
             #error
             #item
         }
         .into();
     }
 
-    // return the original item with the processed assertions
-    let assertions = polyitem.assertions();
     quote! {
-        #assertions
+        #polyitem
         #item
     }
     .into()

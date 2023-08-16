@@ -13,7 +13,7 @@ pub use polytype::*;
 pub use utils::*;
 
 use proc_macro2::TokenStream;
-use quote::{quote, quote_spanned};
+use quote::{quote, quote_spanned, ToTokens};
 use rhai::serde::to_dynamic;
 use syn::spanned::Spanned;
 
@@ -77,6 +77,16 @@ pub enum PolyItem {
     Impl(PolyImpl),
 }
 
+impl ToTokens for PolyItem {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Self::Struct(item) => item.to_tokens(tokens),
+            Self::Fn(item) => item.to_tokens(tokens),
+            Self::Impl(item) => item.to_tokens(tokens),
+        }
+    }
+}
+
 impl PolyItem {
     pub fn build(item: &syn::Item) -> PolyResult<Self> {
         use syn::Item::*;
@@ -102,14 +112,6 @@ impl PolyItem {
                 "impl",
                 to_dynamic(item).expect("Internal Error: Impl dynamic conversion."),
             ),
-        }
-    }
-
-    pub fn assertions(&self) -> &TokenStream {
-        match self {
-            Self::Struct(item) => item.assertions(),
-            Self::Fn(item) => item.assertions(),
-            Self::Impl(item) => item.assertions(),
         }
     }
 }

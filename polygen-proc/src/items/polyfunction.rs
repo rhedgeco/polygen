@@ -51,14 +51,16 @@ pub struct PolyFn {
     output: Option<PolyType>,
 
     #[serde(skip)]
-    assertions: TokenStream,
+    stream: TokenStream,
+}
+
+impl ToTokens for PolyFn {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.stream.clone())
+    }
 }
 
 impl PolyFn {
-    pub fn assertions(&self) -> &TokenStream {
-        &self.assertions
-    }
-
     pub fn build(item: &syn::ItemFn) -> PolyResult<Self> {
         // fail if function contains generics
         if !item.sig.generics.params.empty_or_trailing() {
@@ -69,12 +71,12 @@ impl PolyFn {
         }
 
         // create initial stream
-        let mut assertions = TokenStream::new();
+        let mut stream = TokenStream::new();
 
         // assert that output type is exported by polygen
         use syn::ReturnType::*;
         if let Type(_, ty) = &item.sig.output {
-            assertions.extend(assert_type_exported(ty));
+            stream.extend(assert_type_exported(ty));
         }
 
         // create error builder
@@ -104,7 +106,7 @@ impl PolyFn {
             match input {
                 Typed(typed) => {
                     let ty = &typed.ty;
-                    assertions.extend(assert_type_exported(ty));
+                    stream.extend(assert_type_exported(ty));
                 }
                 _ => (),
             }
@@ -133,7 +135,7 @@ impl PolyFn {
             attrs,
             inputs,
             output,
-            assertions,
+            stream,
         })
     }
 }

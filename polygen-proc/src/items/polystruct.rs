@@ -12,14 +12,16 @@ pub struct PolyStruct {
     fields: Vec<PolyField>,
 
     #[serde(skip)]
-    assertions: TokenStream,
+    stream: TokenStream,
+}
+
+impl ToTokens for PolyStruct {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.stream.clone())
+    }
 }
 
 impl PolyStruct {
-    pub fn assertions(&self) -> &TokenStream {
-        &self.assertions
-    }
-
     pub fn build(item: &syn::ItemStruct) -> PolyResult<Self> {
         // add error if the struct has generics
         if !item.generics.params.empty_or_trailing() {
@@ -30,11 +32,11 @@ impl PolyStruct {
         }
 
         // create assertion stream for the struct
-        let mut assertions = TokenStream::new();
+        let mut stream = TokenStream::new();
 
         // impl the 'exported_by_polygen' trait for this struct
         let name = &item.ident;
-        assertions.extend(quote! {
+        stream.extend(quote! {
             unsafe impl polygen::__private::exported_by_polygen for #name {}
         });
 
@@ -45,7 +47,7 @@ impl PolyStruct {
         let mut fields = Vec::new();
         for (index, field) in item.fields.iter().enumerate() {
             let ty = &field.ty;
-            assertions.extend(assert_type_exported(ty));
+            stream.extend(assert_type_exported(ty));
 
             match PolyField::new(index, field) {
                 Ok(field) => fields.push(field),
@@ -68,7 +70,7 @@ impl PolyStruct {
             name: item.ident.to_string(),
             attrs,
             fields,
-            assertions,
+            stream,
         })
     }
 }
