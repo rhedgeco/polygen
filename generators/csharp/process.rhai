@@ -143,7 +143,7 @@ fn function(func) {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
-                    "named" => new_input.type = `ref readonly ${parse_type(value)}`,
+                    "named" => new_input.type = `in ${parse_type(value)}`,
                     _ => throw `functions dont support nested reference inputs. field: '${name}'`,
                 }
             }
