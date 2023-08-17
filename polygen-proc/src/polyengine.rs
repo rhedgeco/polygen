@@ -13,7 +13,7 @@ use rhai::module_resolvers::FileModuleResolver;
 use script::PolyScript;
 use thiserror::Error;
 
-use crate::items::{PolyError, PolyErrorBuilder, PolyItem, PolyResult};
+use crate::polyitems::{PolyError, PolyItem, PolyResult};
 
 use self::script::ScriptError;
 
@@ -87,7 +87,7 @@ impl PolyEngine {
 
     pub fn process(&self, item: &PolyItem) -> PolyResult<()> {
         // create error builder
-        let mut errors = PolyErrorBuilder::new();
+        let mut errors = PolyError::empty();
 
         // process the item using every script
         for script in &self.scripts {

@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 use rhai::serde::to_dynamic;
 use thiserror::Error;
 
-use crate::items::PolyItem;
+use crate::polyitems::PolyItem;
 
 static PACKAGE_NAME: Lazy<String> =
     Lazy::new(|| std::env::var("CARGO_PKG_NAME").unwrap_or("no_package_name".to_string()));

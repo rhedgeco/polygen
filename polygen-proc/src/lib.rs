@@ -1,8 +1,8 @@
-mod engine;
-mod items;
+mod polyengine;
+mod polyitems;
 
-use engine::PolyEngine;
-use items::PolyItem;
+use polyengine::PolyEngine;
+use polyitems::{PolyBuild, PolyItem};
 use proc_macro::TokenStream;
 use quote::quote;
 
@@ -10,10 +10,12 @@ use quote::quote;
 pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // get the item and parse it, returning an error on failure
     let item = syn::parse_macro_input!(item as syn::Item);
-    let polyitem = match PolyItem::build(&item) {
+    let PolyBuild {
+        polyitem,
+        assertions,
+    } = match PolyItem::build(&item) {
         Ok(polyitem) => polyitem,
         Err(error) => {
-            let error = error.stream();
             return quote! {
                 #error
                 #item
@@ -27,7 +29,7 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
         Ok(engine) => engine,
         Err(error) => {
             return quote! {
-                #polyitem
+                #assertions
                 #error
                 #item
             }
@@ -37,9 +39,8 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // process the polyitem using the engine
     if let Err(error) = engine.process(&polyitem) {
-        let error = error.stream();
         return quote! {
-            #polyitem
+            #assertions
             #error
             #item
         }
@@ -47,7 +48,7 @@ pub fn polygen(_attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     quote! {
-        #polyitem
+        #assertions
         #item
     }
     .into()
