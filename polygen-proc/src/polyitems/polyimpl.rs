@@ -71,7 +71,7 @@ impl PolyImpl {
                                 };
                                 let mutability = rec.mutability.clone();
                                 (
-                                    syn::parse_quote!(__polygen_self: #reference #mutability #self_ty),
+                                    syn::parse_quote!(__polygen_impl_self: #reference #mutability #self_ty),
                                     syn::Ident::new("__polygen_impl_self", rec.span()),
                                 )
                             }
