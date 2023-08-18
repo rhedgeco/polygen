@@ -48,7 +48,7 @@ fn struct_function(lib_name, implfn) {
     // filter the inputs for self parameters
     let filtered_inputs = [];
     for input in implfn.function.inputs {
-        if input.name != "__polygen_self" {
+        if input.name != "__polygen_impl_self" {
             filtered_inputs += input;
         } else {
             static_keyword = "";
@@ -58,7 +58,7 @@ fn struct_function(lib_name, implfn) {
     // render all function inputs
     let inputs = utils::render_each(filtered_inputs, ", ", function_input);
     let pass_inputs = utils::render_each(implfn.function.inputs, ", ", |input| {
-        if input.name == "__polygen_self" {
+        if input.name == "__polygen_impl_self" {
             "this"
         } else {
             input.name
