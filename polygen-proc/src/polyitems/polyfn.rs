@@ -13,33 +13,16 @@ struct PolyArg {
 }
 
 impl PolyArg {
-    pub fn build(item: &syn::FnArg, self_override: Option<&str>) -> BuildResult<Self> {
+    pub fn build(item: &syn::FnArg) -> BuildResult<Self> {
         use syn::FnArg::*;
         let typed = match item {
             Typed(typed) => typed,
-            Receiver(rec) => match self_override {
-                None => {
-                    return Err(PolyError::spanned(
-                        rec,
-                        "This function doesn't support the 'self' parameter.",
-                    ))
-                }
-                Some(self_override) => {
-                    if rec.colon_token.is_some() {
-                        return Err(PolyError::spanned(
-                            rec,
-                            "Polygen functions don't support explicit 'self' parameters.",
-                        ));
-                    }
-
-                    return Ok(
-                        PolyType::build(&rec.ty, Some(self_override))?.map(|ty| Self {
-                            name: "__polygen_impl_self".to_string(),
-                            r#type: ty,
-                        }),
-                    );
-                }
-            },
+            Receiver(rec) => {
+                return Err(PolyError::spanned(
+                    rec,
+                    "Polygen functions don't support the 'self' parameter.",
+                ));
+            }
         };
 
         use syn::Pat::*;
@@ -53,7 +36,7 @@ impl PolyArg {
             }
         };
 
-        Ok(PolyType::build(&typed.ty, self_override)?.map(|r#type| Self { name, r#type }))
+        Ok(PolyType::build(&typed.ty)?.map(|r#type| Self { name, r#type }))
     }
 }
 
@@ -66,7 +49,7 @@ pub struct PolyFnSig {
 }
 
 impl PolyFnSig {
-    pub fn build(item: &syn::Signature, self_override: Option<&str>) -> BuildResult<Self> {
+    pub fn build(item: &syn::Signature) -> BuildResult<Self> {
         // fail if function contains generics
         if !item.generics.params.empty_or_trailing() {
             return Err(PolyError::spanned(
@@ -85,7 +68,7 @@ impl PolyFnSig {
         use syn::ReturnType::*;
         let output = match &item.output {
             Default => None,
-            Type(_, ty) => match PolyType::build(ty, self_override) {
+            Type(_, ty) => match PolyType::build(ty) {
                 Ok(build) => {
                     assertions.extend(build.assertions);
                     Some(build.polyitem)
@@ -100,7 +83,7 @@ impl PolyFnSig {
         // assert that all input fields are also exported by polygen
         let mut inputs = Vec::new();
         for input in &item.inputs {
-            match PolyArg::build(input, self_override) {
+            match PolyArg::build(input) {
                 Ok(build) => {
                     assertions.extend(build.assertions);
                     inputs.push(build.polyitem);
@@ -150,6 +133,6 @@ impl PolyFn {
             attrs.push(attr.meta.to_token_stream().to_string());
         }
 
-        Ok(PolyFnSig::build(&item.sig, None)?.map(|sig| Self { vis, attrs, sig }))
+        Ok(PolyFnSig::build(&item.sig)?.map(|sig| Self { vis, attrs, sig }))
     }
 }

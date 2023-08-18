@@ -29,7 +29,7 @@ impl PolyImpl {
 
         // create the type for this impl
         let self_ty = &item.self_ty;
-        let type_build = PolyType::build(&self_ty, None)?;
+        let type_build = PolyType::build(&self_ty)?;
         let polytype = type_build.polyitem;
         assertions.extend(type_build.assertions);
 
