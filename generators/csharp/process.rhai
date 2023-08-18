@@ -129,7 +129,7 @@ fn function(func) {
     new_func.inputs = [];
     for input in func.inputs {
         let new_input = #{};
-        let name = as_camel_case(input.name);
+        let name = input.name;
         if is_keyword(name) {
             throw `cannot use parameter name '${name}' because it is also a csharp keyword`;
         }
@@ -212,7 +212,6 @@ fn impl(impl) {
     new_impl.functions = [];
     for implfn in impl.functions {
         let new_implfn = #{};
-        new_implfn.has_self = implfn.has_self;
         new_implfn.vis = parse_vis(implfn.vis);
         new_implfn.alias = as_pascal_case(implfn.alias);
         new_implfn.function = function(implfn.function);

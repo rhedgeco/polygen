@@ -13,7 +13,6 @@ use super::{BuildResult, PolyBuild, PolyError, PolyType};
 pub struct FnImpl {
     vis: bool,
     alias: String,
-    has_self: bool,
     function: PolyFn,
 }
 
@@ -72,8 +71,8 @@ impl PolyImpl {
                                 };
                                 let mutability = rec.mutability.clone();
                                 (
-                                    syn::parse_quote!(_self: #reference #mutability #self_ty),
-                                    syn::Ident::new("_self", rec.span()),
+                                    syn::parse_quote!(__polygen_self: #reference #mutability #self_ty),
+                                    syn::Ident::new("__polygen_self", rec.span()),
                                 )
                             }
                             i @ Typed(pat) => {
@@ -129,15 +128,9 @@ impl PolyImpl {
                         }
                     };
 
-                    let has_self = sig.inputs.iter().any(|i| match i {
-                        syn::FnArg::Receiver(_) => true,
-                        syn::FnArg::Typed(_) => false,
-                    });
-
                     functions.push(FnImpl {
                         vis: vis.to_token_stream().to_string() == "pub",
                         alias: fn_name,
-                        has_self,
                         function,
                     })
                 }

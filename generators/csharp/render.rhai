@@ -41,16 +41,34 @@ fn struct_field(field) {
 }
 
 fn struct_function(lib_name, implfn) {
-    let inputs = utils::render_each(implfn.function.inputs, ", ", function_input);
-    let pass_inputs = utils::render_each(implfn.function.inputs, ", ", |input| input.name);
-    let _static = if implfn.has_self { "" } else { " static" };
+    // create extern function
+    let extern_fn = function(lib_name, implfn.function);
+    let static_keyword = " static";
+
+    // filter the inputs for self parameters
+    let filtered_inputs = [];
+    for input in implfn.function.inputs {
+        if input.name != "__polygen_self" {
+            filtered_inputs += input;
+        } else {
+            static_keyword = "";
+        }
+    }
+
+    // render all function inputs
+    let inputs = utils::render_each(filtered_inputs, ", ", function_input);
+    let pass_inputs = utils::render_each(implfn.function.inputs, ", ", |input| {
+        if input.name == "__polygen_self" {
+            "this"
+        } else {
+            input.name
+        }
+    });
+
+    // create the member function
+    let member_fn = `${implfn.vis}${static_keyword} ${implfn.function.output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});`;
     
-    let tmp = docformat(`
-    polygen-extern
-    ${implfn.vis}${_static} ${implfn.function.output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});
-    `);
-    
-    return replace(tmp, "polygen-extern", function(lib_name, implfn.function))
+    return extern_fn + "\n" + member_fn;
 }
 
 fn function(lib_name, func) {
@@ -63,5 +81,5 @@ fn function(lib_name, func) {
 }
 
 private fn function_input(input) {
-    return `${input.type} ${input.name}`;
+    return `${input.type} ${as_camel_case(input.name)}`;
 }

@@ -34,7 +34,7 @@ impl PolyArg {
 
                     return Ok(
                         PolyType::build(&rec.ty, Some(self_override))?.map(|ty| Self {
-                            name: "_self".to_string(),
+                            name: "__polygen_self".to_string(),
                             r#type: ty,
                         }),
                     );
