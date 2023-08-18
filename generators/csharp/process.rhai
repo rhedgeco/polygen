@@ -204,3 +204,19 @@ fn parse_type(type) {
     
     return type;
 }
+
+fn impl(impl) {
+    let new_impl = #{};
+    new_impl.name = as_pascal_case(impl.name);
+    
+    new_impl.functions = [];
+    for implfn in impl.functions {
+        let new_implfn = #{};
+        new_implfn.vis = parse_vis(implfn.vis);
+        new_implfn.alias = as_pascal_case(implfn.alias);
+        new_implfn.function = function(implfn.function);
+        new_impl.functions += new_implfn;
+    }
+
+    return new_impl;
+}

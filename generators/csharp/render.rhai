@@ -22,7 +22,7 @@ fn static_class(name, inner) {
     return replace(tmp, "polygen-inner", indent(4, inner));
 }
 
-fn struct(struct) {
+fn struct(struct, inner) {
     let tmp = docformat(`
         [StructLayout(LayoutKind.Sequential)]
         ${struct.vis} partial struct ${struct.name}
@@ -30,15 +30,26 @@ fn struct(struct) {
         polygen-inner
         }
     `);
-    
-    let fields = utils::render_each(struct.fields, "\n", struct_field);
-    return replace(tmp, "polygen-inner", indent(4, fields));
+
+    return replace(tmp, "polygen-inner", indent(4, inner));
 }
 
-private fn struct_field(field) {
+fn struct_field(field) {
     docformat(`
         ${field.vis} ${field.type} ${field.name};
     `)
+}
+
+fn struct_function(lib_name, implfn) {
+    let inputs = utils::render_each(implfn.function.inputs, ", ", function_input);
+    let pass_inputs = utils::render_each(implfn.function.inputs, ", ", |input| input.name);
+    
+    let tmp = docformat(`
+    polygen-extern
+    ${implfn.vis} ${implfn.function.output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});
+    `);
+    
+    return replace(tmp, "polygen-extern", function(lib_name, implfn.function))
 }
 
 fn function(lib_name, func) {

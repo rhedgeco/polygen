@@ -69,6 +69,23 @@ impl PolyError {
         }
     }
 
+    /// Pushes a new error with `message` into this error
+    #[allow(dead_code)]
+    pub fn push_simple<M>(&mut self, message: M)
+    where
+        M: Display + Debug + Send + Sync + 'static,
+    {
+        self.merge(Self::simple(message))
+    }
+
+    /// Pushes a new error with `message` over `span` into this error
+    pub fn push_spanned<M>(&mut self, span: &impl Spanned, message: M)
+    where
+        M: Display + Debug + Send + Sync + 'static,
+    {
+        self.merge(Self::spanned(span, message))
+    }
+
     /// Merges and consumes `other` into self
     pub fn merge(&mut self, mut other: Self) {
         self.errors.append(&mut other.errors);

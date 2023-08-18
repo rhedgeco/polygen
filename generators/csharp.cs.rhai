@@ -20,25 +20,40 @@ fn function(function) {
     this.functions[function.name] = process::function(function);
 }
 
+fn impl(impl) {
+    if this.impls == () { this.impls = #{}; }
+    if this.impls.contains(impl.name) {
+        throw `Cannot export multiple impls with the name '${impl.name}'`;
+    }
+
+    this.impls[impl.name] = process::impl(impl);
+}
+
 fn render() {
     // ensure all items exist
     if this.structs == () { this.structs = #{}; }
     if this.functions == () { this.functions = #{}; }
+    if this.impls == () { this.impls = #{}; }
 
     // create library template
     let library_items = docformat(`
         public const string NativeLib = "${replace(PACKAGE_NAME, "-", "_")}";
-
-        poly-structs
-
-        poly-functions
     `);
 
     // replace placeholder text with rendered items
-    let structs = utils::render_each(this.structs.values(), "\n\n", |struct| render::struct(struct));
-    let library_items = replace(library_items, "poly-structs", structs);
+    let all_impls = this.impls;
+    let structs = utils::render_each(this.structs.values(), "\n\n", |struct| {
+        let impls = all_impls[struct.name];
+        let inner = utils::render_each(struct.fields, "\n", |field| render::struct_field(field));
+        if impls != () {
+            inner += "\n\n" + utils::render_each(impls.functions, "\n\n", |implfn| render::struct_function("NativeLib", implfn));
+        }
+        
+        render::struct(struct, inner)
+    });
+    if structs != "" { library_items += "\n\n" + structs; }
     let functions = utils::render_each(this.functions.values(), "\n\n", |func| render::function("NativeLib", func));
-    let library_items = replace(library_items, "poly-functions", functions);
+    if functions != "" { library_items += "\n\n" + functions; }
 
     // render final output template
     let output = docformat(`

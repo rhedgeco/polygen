@@ -1,70 +1,70 @@
+use proc_macro2::TokenStream;
 use quote::{quote_spanned, ToTokens};
 use serde::Serialize;
 use syn::spanned::Spanned;
 
-use super::{BuildResult, PolyBuild, PolyError, PolyResult};
+use super::{BuildResult, PolyBuild, PolyError};
 
-#[derive(Serialize)]
-enum PolyTypePath {
+#[derive(Serialize, Clone)]
+pub enum PolyType {
     #[serde(rename = "named")]
     Named(String),
     #[serde(rename = "ref")]
-    Ref(Box<PolyTypePath>),
+    Ref(Box<PolyType>),
     #[serde(rename = "mutref")]
-    RefMut(Box<PolyTypePath>),
+    RefMut(Box<PolyType>),
     #[serde(rename = "mutptr")]
-    PtrMut(Box<PolyTypePath>),
+    PtrMut(Box<PolyType>),
     #[serde(rename = "constptr")]
-    PtrConst(Box<PolyTypePath>),
-}
-
-impl PolyTypePath {
-    fn build(item: &syn::Type) -> PolyResult<Self> {
-        static UNSUPPORTED_MESSAGE: &str = "This type is not supported by polygen.";
-        use syn::Type::*;
-        match item {
-            Path(path) => match path.path.segments.last() {
-                Some(name) => Ok(Self::Named(name.to_token_stream().to_string())),
-                None => Err(PolyError::spanned(item, UNSUPPORTED_MESSAGE)),
-            },
-            Reference(reference) => {
-                let inner_type = Box::new(Self::build(&reference.elem)?);
-                match reference.mutability {
-                    Some(_) => Ok(Self::RefMut(inner_type)),
-                    None => Ok(Self::Ref(inner_type)),
-                }
-            }
-            Ptr(ptr) => {
-                let inner_type = Box::new(Self::build(&ptr.elem)?);
-                match ptr.const_token {
-                    Some(_) => Ok(Self::PtrConst(inner_type)),
-                    None => Ok(Self::PtrMut(inner_type)),
-                }
-            }
-            _ => Err(PolyError::spanned(item, UNSUPPORTED_MESSAGE)),
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub struct PolyType {
-    #[serde(flatten)]
-    path: PolyTypePath,
+    PtrConst(Box<PolyType>),
 }
 
 impl PolyType {
-    pub fn build(item: &syn::Type) -> BuildResult<Self> {
-        PolyBuild::build(
-            Self {
-                path: PolyTypePath::build(item)?,
+    pub fn build(item: &syn::Type, self_override: Option<&str>) -> BuildResult<Self> {
+        static UNSUPPORTED_MESSAGE: &str = "This type is not supported by polygen.";
+
+        use syn::Type::*;
+        match item {
+            Path(path) => match path.path.segments.last() {
+                Some(name) => {
+                    let mut assertions = TokenStream::new();
+                    let mut name = name.to_token_stream().to_string();
+                    if name == "Self" {
+                        match self_override {
+                            None => {
+                                return Err(PolyError::spanned(item, "`Self` is not valid here"))
+                            }
+                            Some(self_override) => name = self_override.to_owned(),
+                        }
+                    } else {
+                        assertions.extend(quote_spanned! { item.span() =>
+                            const _: fn() = || {
+                                fn __assert_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
+                                fn __accept_exported(_item: #item) { __assert_exported(_item); }
+                            };
+                        });
+                    }
+
+                    PolyBuild::build(Self::Named(name), assertions)
+                }
+                None => Err(PolyError::spanned(item, UNSUPPORTED_MESSAGE)),
             },
-            quote_spanned! { item.span() =>
-                const _: fn() = || {
-                    fn __assert_exported<T: polygen::__private::exported_by_polygen>(_item: T) {}
-                    fn __accept_exported(_item: #item) { __assert_exported(_item); }
-                };
-            },
-        )
+            Reference(reference) => Ok(Self::build(&reference.elem, self_override)?.map(|inner| {
+                match reference.mutability {
+                    Some(_) => Self::RefMut(Box::new(inner)),
+                    None => Self::Ref(Box::new(inner)),
+                }
+            })),
+            Ptr(ptr) => {
+                Ok(
+                    Self::build(&ptr.elem, self_override)?.map(|inner| match ptr.const_token {
+                        Some(_) => Self::PtrConst(Box::new(inner)),
+                        None => Self::PtrMut(Box::new(inner)),
+                    }),
+                )
+            }
+            _ => Err(PolyError::spanned(item, UNSUPPORTED_MESSAGE)),
+        }
     }
 }
 
@@ -82,6 +82,6 @@ impl PolyField {
             Some(ident) => ident.to_string(),
             None => format!("x{index}"),
         };
-        PolyType::build(&field.ty)?.map(|r#type| Self { vis, name, r#type })
+        Ok(PolyType::build(&field.ty, None)?.map(|r#type| Self { vis, name, r#type }))
     }
 }

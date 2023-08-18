@@ -17,7 +17,10 @@ impl<T> PolyBuild<T> {
         })
     }
 
-    pub fn map<U>(self, f: impl FnOnce(T) -> U) -> BuildResult<U> {
-        PolyBuild::build(f(self.polyitem), self.assertions)
+    pub fn map<U>(self, f: impl FnOnce(T) -> U) -> PolyBuild<U> {
+        PolyBuild {
+            polyitem: f(self.polyitem),
+            assertions: self.assertions,
+        }
     }
 }

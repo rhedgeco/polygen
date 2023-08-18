@@ -3,6 +3,7 @@ mod script;
 
 use std::{
     fs, io,
+    ops::Deref,
     path::PathBuf,
     sync::{Arc, OnceLock},
 };
@@ -93,25 +94,25 @@ impl PolyEngine {
         for script in &self.scripts {
             if let Err(error) = script.process(item) {
                 use rhai::EvalAltResult::*;
-                let error_message = match *error {
+                let error_message = match error.deref() {
                     // if the function was not found, create readable error
                     ErrorFunctionNotFound(name, _) => format!(
                         "Cannot process item. \
                         Missing function with with signature '{name}(item)'."
                     ),
                     // if the error is nested, un-roll it to get to the root
-                    error @ ErrorInFunctionCall(_, _, _, _) => {
-                        let mut inner_error = &error;
-                        while let ErrorInFunctionCall(_, _, inner, _) = inner_error {
-                            inner_error = &**inner;
+                    error @ ErrorInFunctionCall(_, _, inner, _) => {
+                        let mut inner_error = inner;
+                        while let ErrorInFunctionCall(_, _, inner, _) = inner_error.deref() {
+                            inner_error = inner;
                         }
 
-                        // format runtime errors without context to make errors prettier
-                        match inner_error {
+                        match inner_error.deref() {
                             ErrorRuntime(e, _) => format!("{e}"),
                             _ => format!("{error}"),
                         }
                     }
+                    ErrorRuntime(e, _) => format!("{e}"),
                     error => format!("{error}"),
                 };
 
