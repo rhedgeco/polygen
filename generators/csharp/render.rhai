@@ -43,10 +43,11 @@ fn struct_field(field) {
 fn struct_function(lib_name, implfn) {
     let inputs = utils::render_each(implfn.function.inputs, ", ", function_input);
     let pass_inputs = utils::render_each(implfn.function.inputs, ", ", |input| input.name);
+    let _static = if implfn.has_self { "" } else { " static" };
     
     let tmp = docformat(`
     polygen-extern
-    ${implfn.vis} ${implfn.function.output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});
+    ${implfn.vis}${_static} ${implfn.function.output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});
     `);
     
     return replace(tmp, "polygen-extern", function(lib_name, implfn.function))

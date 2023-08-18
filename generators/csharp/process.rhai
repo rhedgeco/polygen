@@ -212,6 +212,7 @@ fn impl(impl) {
     new_impl.functions = [];
     for implfn in impl.functions {
         let new_implfn = #{};
+        new_implfn.has_self = implfn.has_self;
         new_implfn.vis = parse_vis(implfn.vis);
         new_implfn.alias = as_pascal_case(implfn.alias);
         new_implfn.function = function(implfn.function);
