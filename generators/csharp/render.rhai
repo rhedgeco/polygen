@@ -75,7 +75,7 @@ fn function(lib_name, func) {
     let inputs = utils::render_each(func.inputs, ", ", function_input);
 
     return docformat(`
-        [DllImport(${lib_name}, EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("${lib_name}", EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
         ${func.vis} static extern ${func.output} ${func.name}(${inputs});
     `);
 }

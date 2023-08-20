@@ -129,7 +129,8 @@ fn function(func) {
     new_func.inputs = [];
     for input in func.inputs {
         let new_input = #{};
-        let name = input.name;
+        let name = if input.name == "__polygen_impl_self" { input.name } else { as_camel_case(input.name) };
+        
         if is_keyword(name) {
             throw `cannot use parameter name '${name}' because it is also a csharp keyword`;
         }
