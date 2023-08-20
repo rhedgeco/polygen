@@ -62,6 +62,7 @@ fn struct_function(lib_name, implfn) {
         let pass_input = "";
         if input.type.starts_with("in ") { pass_input = "in " };
         if input.type.starts_with("ref ") { pass_input = "ref " };
+        if input.type.ends_with("*") { unsafe_keyword = " unsafe" };
         pass_input += if input.name == "__polygen_impl_self" {
             "this"
         } else {
@@ -73,7 +74,8 @@ fn struct_function(lib_name, implfn) {
 
     // create the member function
     let output = implfn.function.output;
-    if output == () { output = "void" };
+    if output == () { output = "void"; }
+    else if output.ends_with("*") { unsafe_keyword = " unsafe"; }
     let member_fn = `${implfn.vis}${static_keyword}${unsafe_keyword} ${output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});`;
     
     return extern_fn + "\n" + member_fn;
@@ -83,7 +85,8 @@ fn function(lib_name, func) {
     let inputs = utils::render_each(func.inputs, ", ", function_input);
     let unsafe_keyword = if func.is_unsafe { " unsafe" } else { "" };
     let output = func.output;
-    if output == () { output = "void" };
+    if output == () { output = "void"; }
+    else if output.ends_with("*") { unsafe_keyword = " unsafe"; }
 
     return docformat(`
         [DllImport("${lib_name}", EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
