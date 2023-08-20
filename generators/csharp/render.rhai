@@ -43,6 +43,7 @@ fn struct_field(field) {
 fn struct_function(lib_name, implfn) {
     // create extern function
     let extern_fn = function(lib_name, implfn.function);
+    let unsafe_keyword = if implfn.function.is_unsafe { " unsafe" } else { "" };
     let static_keyword = " static";
 
     // filter the inputs for self parameters
@@ -58,25 +59,35 @@ fn struct_function(lib_name, implfn) {
     // render all function inputs
     let inputs = utils::render_each(filtered_inputs, ", ", function_input);
     let pass_inputs = utils::render_each(implfn.function.inputs, ", ", |input| {
-        if input.name == "__polygen_impl_self" {
+        let pass_input = "";
+        if input.type.starts_with("in ") { pass_input = "in " };
+        if input.type.starts_with("ref ") { pass_input = "ref " };
+        pass_input += if input.name == "__polygen_impl_self" {
             "this"
         } else {
             input.name
-        }
+        };
+
+        pass_input
     });
 
     // create the member function
-    let member_fn = `${implfn.vis}${static_keyword} ${implfn.function.output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});`;
+    let output = implfn.function.output;
+    if output == () { output = "void" };
+    let member_fn = `${implfn.vis}${static_keyword}${unsafe_keyword} ${output} ${implfn.alias}(${inputs}) => ${implfn.function.name}(${pass_inputs});`;
     
     return extern_fn + "\n" + member_fn;
 }
 
 fn function(lib_name, func) {
     let inputs = utils::render_each(func.inputs, ", ", function_input);
+    let unsafe_keyword = if func.is_unsafe { " unsafe" } else { "" };
+    let output = func.output;
+    if output == () { output = "void" };
 
     return docformat(`
         [DllImport("${lib_name}", EntryPoint = "${func.original_name}", CallingConvention = CallingConvention.Cdecl)]
-        ${func.vis} static extern ${func.output} ${func.name}(${inputs});
+        ${func.vis} static${unsafe_keyword} extern ${output} ${func.name}(${inputs});
     `);
 }
 

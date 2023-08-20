@@ -38,10 +38,10 @@ fn render() {
     // render all library items
     let all_impls = this.impls;
     let library_items = utils::render_each(this.structs.values(), "\n\n", |struct| {
-        let impls = all_impls[struct.name];
+        let impl = all_impls[struct.name];
         let inner = utils::render_each(struct.fields, "\n", |field| render::struct_field(field));
-        if impls != () {
-            inner += "\n\n" + utils::render_each(impls.functions, "\n\n", |implfn| render::struct_function(PACKAGE_NAME, implfn));
+        if impl != () {
+            inner += "\n\n" + utils::render_each(impl.functions, "\n\n", |implfn| render::struct_function(PACKAGE_NAME, implfn));
         }
         
         render::struct(struct, inner)

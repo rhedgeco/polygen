@@ -43,6 +43,7 @@ impl PolyArg {
 #[derive(Serialize)]
 pub struct PolyFnSig {
     abi: Option<String>,
+    is_unsafe: bool,
     name: String,
     inputs: Vec<PolyArg>,
     output: Option<PolyType>,
@@ -105,6 +106,7 @@ impl PolyFnSig {
         PolyBuild::build(
             Self {
                 abi,
+                is_unsafe: item.unsafety.is_some(),
                 name: item.ident.to_string(),
                 inputs,
                 output,

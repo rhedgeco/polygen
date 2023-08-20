@@ -83,6 +83,7 @@ fn struct(struct) {
 fn function(func) {
     let new_func = #{};
     new_func.vis = parse_vis(func.vis);
+    new_func.is_unsafe = func.is_unsafe;
     new_func.original_name = func.name;
     new_func.name = as_pascal_case(func.name);
 
@@ -148,7 +149,7 @@ fn function(func) {
                     _ => throw `functions dont support nested reference inputs. field: '${name}'`,
                 }
             }
-            "refmut" => {
+            "mutref" => {
                 let key = value.keys()[0];
                 let value = value.values()[0];
                 switch key {
