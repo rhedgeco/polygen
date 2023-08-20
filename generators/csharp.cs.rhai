@@ -49,17 +49,16 @@ fn render() {
     let functions = utils::render_each(this.functions.values(), "\n\n", |func| render::function(PACKAGE_NAME, func));
     if functions != "" { library_items += "\n\n" + functions; }
 
-    // render final output template
+    // create final output starting with using statements
     let output = docformat(`
-        using System;
         using System.Runtime.InteropServices;
-
-        poly-static-class
     `);
 
     // replace placeholder text with rendered static class
-    let static_class = render::static_class(PACKAGE_NAME, library_items);
+    let static_class = render::static_class("Native", library_items);
     let output = replace(output, "poly-static-class", static_class);
+    let namespace = render::namespace(PACKAGE_NAME, static_class);
+    output += "\n\n" + namespace;
 
     // create a comment to tag the beginning of the file
     let generated_comment = docformat(`
