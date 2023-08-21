@@ -13,7 +13,7 @@ fn namespace(name, inner) {
 
 fn static_class(name, inner) {
     let tmp = docformat(`
-        public static partial class ${as_pascal_case(name)}
+        public static class ${as_pascal_case(name)}
         {
         polygen-inner
         }
@@ -25,7 +25,7 @@ fn static_class(name, inner) {
 fn struct(struct, inner) {
     let tmp = docformat(`
         [StructLayout(LayoutKind.Sequential)]
-        ${struct.vis} partial struct ${struct.name}
+        ${struct.vis} struct ${struct.name}
         {
         polygen-inner
         }
