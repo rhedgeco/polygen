@@ -40,6 +40,7 @@ fn struct(struct) {
         throw "struct must have attribute '#[repr(C)]'";
     }
 
+    if struct.fields.is_empty() { throw "unit structs are not supported"; }
     new_struct.fields = [];
     for field in struct.fields {
         let new_field = #{};
