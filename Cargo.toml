@@ -1,0 +1,7 @@
+[package]
+name = "polygen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+polygen-proc = { path = "./polygen-proc" }
