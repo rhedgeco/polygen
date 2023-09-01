@@ -13,16 +13,6 @@ pub struct TestStruct3 {
 }
 
 #[polygen]
-pub fn test(_thing: TestStruct) -> TestStruct2 {
-    todo!()
-}
-
-#[polygen]
-pub fn test2(_: TestStruct, _another: TestStruct3) {
-    todo!()
-}
-
-#[polygen]
-pub fn test3(_thing: TestStruct) -> TestStruct3 {
+pub fn test(_thing: TestStruct, _thing2: TestStruct2) -> TestStruct2 {
     todo!()
 }
