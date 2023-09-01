@@ -16,3 +16,15 @@ pub struct TestStruct3 {
 pub fn test(_thing: TestStruct, thing2: TestStruct2) -> TestStruct2 {
     thing2
 }
+
+mod sub_module {
+    use super::*;
+
+    #[polygen]
+    pub struct TestStruct(u32, u64);
+
+    #[polygen]
+    pub fn test(_thing: TestStruct, thing2: TestStruct2) -> TestStruct2 {
+        thing2
+    }
+}
