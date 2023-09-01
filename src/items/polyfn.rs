@@ -1,5 +1,6 @@
 use super::{PolyField, PolyType};
 
+#[derive(Debug, Clone, Copy)]
 pub struct PolyFn {
     pub ident: &'static str,
     pub module: &'static str,

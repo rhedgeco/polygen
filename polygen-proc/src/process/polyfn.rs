@@ -65,13 +65,11 @@ pub fn polyfn(_attr: TokenStream, item: &syn::ItemFn) -> proc_macro2::TokenStrea
         ),
     };
 
-    let struct_ident = syn::Ident::new(&format!("__polygen_fn_{ident}"), ident.span());
-
     return quote! {
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
-        pub struct #struct_ident {}
-        unsafe impl ::polygen::__private::ExportedPolyFn for #struct_ident {
+        pub struct #ident {}
+        unsafe impl ::polygen::__private::ExportedPolyFn for #ident {
             const FUNCTION: ::polygen::items::PolyFn = ::polygen::items::PolyFn {
                 ident: stringify!(#ident),
                 module: module_path!(),
