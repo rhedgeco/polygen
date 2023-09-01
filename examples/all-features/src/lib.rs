@@ -13,6 +13,6 @@ pub struct TestStruct3 {
 }
 
 #[polygen]
-pub fn test(_thing: TestStruct, _thing2: TestStruct2) -> TestStruct2 {
-    todo!()
+pub fn test(_thing: TestStruct, thing2: TestStruct2) -> TestStruct2 {
+    thing2
 }
