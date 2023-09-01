@@ -1,26 +1,26 @@
 use crate::items::PolyType;
 
-pub trait ExportedPolyType: Sized {
+pub unsafe trait ExportedPolyType: Sized {
     type ExportedType: From<Self> + Into<Self>;
     const TYPE: PolyType;
 }
 
-impl<'a, T: ExportedPolyType> ExportedPolyType for &'a T {
+unsafe impl<'a, T: ExportedPolyType> ExportedPolyType for &'a T {
     type ExportedType = &'a T;
     const TYPE: PolyType = PolyType::Ref(&T::TYPE);
 }
 
-impl<'a, T: ExportedPolyType> ExportedPolyType for &'a mut T {
+unsafe impl<'a, T: ExportedPolyType> ExportedPolyType for &'a mut T {
     type ExportedType = &'a mut T;
     const TYPE: PolyType = PolyType::RefMut(&T::TYPE);
 }
 
-impl<T: ExportedPolyType> ExportedPolyType for *mut T {
+unsafe impl<T: ExportedPolyType> ExportedPolyType for *mut T {
     type ExportedType = *mut T;
     const TYPE: PolyType = PolyType::PtrMut(&T::TYPE);
 }
 
-impl<T: ExportedPolyType> ExportedPolyType for *const T {
+unsafe impl<T: ExportedPolyType> ExportedPolyType for *const T {
     type ExportedType = *const T;
     const TYPE: PolyType = PolyType::PtrConst(&T::TYPE);
 }
@@ -29,7 +29,7 @@ impl<T: ExportedPolyType> ExportedPolyType for *const T {
 macro_rules! impl_item {
     ($( $item:ty),+ $(,)?) => {
         $(
-            impl $crate::__private::ExportedPolyType for $item {
+            unsafe impl $crate::__private::ExportedPolyType for $item {
                 type ExportedType = $item;
                 const TYPE: $crate::items::PolyType = $crate::items::PolyType::Struct(
                     $crate::items::PolyStruct {

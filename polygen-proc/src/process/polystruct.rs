@@ -88,7 +88,7 @@ pub fn polystruct(_attr: TokenStream, item: &syn::ItemStruct) -> proc_macro2::To
         }
 
         // implement the export type to be used by compiler
-        impl ::polygen::__private::ExportedPolyType for #ident {
+        unsafe impl ::polygen::__private::ExportedPolyType for #ident {
             type ExportedType = #export_ident;
             const TYPE: ::polygen::items::PolyType = ::polygen::items::PolyType::Struct(
                 ::polygen::items::PolyStruct {
