@@ -1,3 +1,4 @@
+use heck::ToPascalCase;
 use indent::indent_by;
 use indoc::formatdoc;
 use polygen::PolyMod;
@@ -7,7 +8,7 @@ use crate::utils;
 use super::{polyfn::render_function, polystruct::render_struct};
 
 pub fn render_module(lib_name: &str, m: &PolyMod) -> String {
-    let class_name = heck::AsPascalCase(m.name());
+    let class_name = m.name().to_pascal_case();
     let doc = formatdoc! {"
         public static class {class_name}
         {{

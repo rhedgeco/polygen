@@ -1,3 +1,4 @@
+use heck::ToPascalCase;
 use polygen::items::{PolyStruct, PolyType};
 
 pub fn convert_polytype(t: Option<&PolyType>) -> String {
@@ -16,29 +17,29 @@ pub fn convert_polytype(t: Option<&PolyType>) -> String {
 fn convert_typename(s: &PolyStruct) -> String {
     let mut module = String::new();
     for mod_name in s.module.split("::").skip(1) {
-        let mod_name = heck::AsPascalCase(mod_name);
+        let mod_name = mod_name.to_pascal_case();
         module += &format!("{mod_name}.");
     }
 
     let ident = match s.ident {
-        "u8" => "byte",
-        "u16" => "ushort",
-        "u32" => "uint",
-        "u64" => "ulong",
-        "usize" => "nuint",
+        "u8" => "byte".into(),
+        "u16" => "ushort".into(),
+        "u32" => "uint".into(),
+        "u64" => "ulong".into(),
+        "usize" => "nuint".into(),
 
-        "i8" => "sbyte",
-        "i16" => "short",
-        "i32" => "int",
-        "i64" => "long",
-        "isize" => "nint",
+        "i8" => "sbyte".into(),
+        "i16" => "short".into(),
+        "i32" => "int".into(),
+        "i64" => "long".into(),
+        "isize" => "nint".into(),
 
-        "bool" => "bool",
-        "f32" => "float",
-        "f64" => "double",
+        "bool" => "bool".into(),
+        "f32" => "float".into(),
+        "f64" => "double".into(),
 
-        ident => ident,
+        ident => ident.to_pascal_case(),
     };
 
-    module + ident
+    module + &ident
 }

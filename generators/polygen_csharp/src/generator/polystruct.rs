@@ -1,3 +1,4 @@
+use heck::ToPascalCase;
 use indent::indent_by;
 use indoc::formatdoc;
 use polygen::items::{PolyField, PolyStruct};
@@ -6,7 +7,7 @@ use crate::{generator::polytype::convert_polytype, utils};
 
 pub fn render_struct(s: &PolyStruct) -> String {
     // crate struct template
-    let ident = heck::AsPascalCase(s.ident);
+    let ident = s.ident.to_pascal_case();
     let doc = formatdoc! {"
         public struct {ident}
         {{
