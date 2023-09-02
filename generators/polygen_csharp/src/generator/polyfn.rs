@@ -11,7 +11,7 @@ pub fn render_function(lib_name: impl AsRef<str>, f: &PolyFn) -> String {
     let entry_point = f.export_ident;
     let out_type = convert_polytype(f.output.as_ref());
     let doc = formatdoc! {"
-        [\"{lib_name}\", EntryPoint = \"{entry_point}\"]
+        [DllImport(\"{lib_name}\", EntryPoint = \"{entry_point}\", CallingConvention = CallingConvention.Cdecl)]
         public static {out_type} {ident}(polygen-inner);"
     };
 

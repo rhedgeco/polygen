@@ -8,7 +8,7 @@ pub fn convert_polytype(t: Option<&PolyType>) -> String {
         | Some(PolyType::RefMut(t))
         | Some(PolyType::PtrMut(t))
         | Some(PolyType::PtrConst(t)) => {
-            format!("*{}", convert_polytype(Some(t)))
+            format!("{}*", convert_polytype(Some(t)))
         }
     }
 }
