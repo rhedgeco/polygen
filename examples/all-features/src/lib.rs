@@ -13,11 +13,11 @@ pub struct TestStruct3 {
 }
 
 #[polygen]
-pub fn test(_thing: TestStruct, thing2: TestStruct2) -> TestStruct2 {
-    thing2
+pub fn test(_thing: &TestStruct, _thing2: sub_module::TestStruct) -> &TestStruct2 {
+    todo!()
 }
 
-mod sub_module {
+pub mod sub_module {
     use super::*;
 
     #[polygen]

@@ -8,3 +8,4 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 polygen = { path = "../../" }
+polygen_csharp = { path = "../../generators/polygen_csharp" }
