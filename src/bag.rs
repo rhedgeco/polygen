@@ -1,8 +1,8 @@
 use indexmap::{IndexMap, IndexSet};
 
 use crate::{
-    __private::ExportedPolyFn,
-    items::{PolyFn, PolyStruct},
+    __private::{ExportedPolyFn, ExportedPolyImpl},
+    items::{PolyFn, PolyImpl, PolyStruct},
 };
 
 pub struct PolyBag {
@@ -19,6 +19,16 @@ impl PolyBag {
         &self.module
     }
 
+    pub fn register_impl<T: ExportedPolyImpl>(mut self) -> Self {
+        let r#type = T::TYPE;
+        let r#impl = T::IMPL;
+        let root_struct = r#type.root_struct();
+
+        let target_mod = self.module.get_target_mod(root_struct.ident.module);
+        target_mod.structs.insert(*root_struct, Some(r#impl));
+        self
+    }
+
     pub fn register_function<T: ExportedPolyFn>(mut self) -> Self {
         // get reference to the function
         let func = &T::FUNCTION;
@@ -27,14 +37,18 @@ impl PolyBag {
         for input in func.inputs {
             let root_struct = input.ty.root_struct();
             let target_mod = self.module.get_target_mod(root_struct.ident.module);
-            target_mod.structs.insert(*root_struct);
+            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*root_struct) {
+                e.insert(None);
+            }
         }
 
         // register its output
         if let Some(out) = &func.output {
             let root_struct = out.root_struct();
             let target_mod = self.module.get_target_mod(root_struct.ident.module);
-            target_mod.structs.insert(*root_struct);
+            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*root_struct) {
+                e.insert(None);
+            }
         }
 
         // insert the function
@@ -47,9 +61,9 @@ impl PolyBag {
 #[derive(Debug)]
 pub struct PolyMod {
     name: String,
-    structs: IndexSet<PolyStruct>,
     functions: IndexSet<PolyFn>,
     modules: IndexMap<String, PolyMod>,
+    structs: IndexMap<PolyStruct, Option<PolyImpl>>,
 }
 
 impl PolyMod {
@@ -66,7 +80,7 @@ impl PolyMod {
         &self.name
     }
 
-    pub fn structs(&self) -> impl Iterator<Item = &PolyStruct> {
+    pub fn structs(&self) -> impl Iterator<Item = (&PolyStruct, &Option<PolyImpl>)> {
         self.structs.iter()
     }
 

@@ -19,7 +19,7 @@ pub fn render_function(lib_name: impl AsRef<str>, f: &PolyFn) -> String {
     doc.replace("polygen-inner", &inner)
 }
 
-fn render_function_input(f: &PolyField) -> String {
+pub fn render_function_input(f: &PolyField) -> String {
     let name = f.name;
     let ty = convert_polytype(Some(&f.ty));
     format!("{ty} {name}")
