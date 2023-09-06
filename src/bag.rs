@@ -26,19 +26,19 @@ impl PolyBag {
         // register all its inputs
         for input in func.inputs {
             let root_struct = input.ty.root_struct();
-            let target_mod = self.module.get_target_mod(root_struct.module);
+            let target_mod = self.module.get_target_mod(root_struct.ident.module);
             target_mod.structs.insert(*root_struct);
         }
 
         // register its output
         if let Some(out) = &func.output {
             let root_struct = out.root_struct();
-            let target_mod = self.module.get_target_mod(root_struct.module);
+            let target_mod = self.module.get_target_mod(root_struct.ident.module);
             target_mod.structs.insert(*root_struct);
         }
 
         // insert the function
-        let target_mod = self.module.get_target_mod(func.module);
+        let target_mod = self.module.get_target_mod(func.ident.module);
         target_mod.functions.insert(*func);
         self
     }

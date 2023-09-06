@@ -92,8 +92,11 @@ pub fn polystruct(_attr: TokenStream, item: &syn::ItemStruct) -> proc_macro2::To
             type ExportedType = #export_ident;
             const TYPE: ::polygen::items::PolyType = ::polygen::items::PolyType::Struct(
                 ::polygen::items::PolyStruct {
-                    ident: stringify!(#ident),
-                    module: module_path!(),
+                    ident: ::polygen::items::PolyIdent {
+                        module: module_path!(),
+                        name: stringify!(#ident),
+                        export_name: stringify!(#ident),
+                    },
                     fields: &[#polyfields],
                 }
             );

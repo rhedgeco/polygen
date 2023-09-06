@@ -27,14 +27,17 @@ unsafe impl<T: ExportedPolyType> ExportedPolyType for *const T {
 
 // create macro to implement polystruct over primitives
 macro_rules! impl_item {
-    ($( $item:ty),+ $(,)?) => {
+    ($($item:ty),+ $(,)?) => {
         $(
             unsafe impl $crate::__private::ExportedPolyType for $item {
                 type ExportedType = $item;
                 const TYPE: $crate::items::PolyType = $crate::items::PolyType::Struct(
                     $crate::items::PolyStruct {
-                        ident: stringify!($item),
-                        module: "std",
+                        ident: $crate::items::PolyIdent {
+                            module: "std",
+                            name: stringify!($item),
+                            export_name: stringify!($item),
+                        },
                         fields: &[],
                     }
                 );

@@ -7,7 +7,7 @@ use crate::{generator::polytype::convert_polytype, utils};
 
 pub fn render_struct(s: &PolyStruct) -> String {
     // crate struct template
-    let ident = s.ident.to_pascal_case();
+    let ident = s.ident.export_name.to_pascal_case();
     let doc = formatdoc! {"
         public struct {ident}
         {{

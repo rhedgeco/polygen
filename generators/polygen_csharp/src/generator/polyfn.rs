@@ -6,9 +6,9 @@ use crate::utils;
 use super::polytype::convert_polytype;
 
 pub fn render_function(lib_name: impl AsRef<str>, f: &PolyFn) -> String {
-    let ident = f.ident;
+    let ident = f.ident.name;
     let lib_name = lib_name.as_ref();
-    let entry_point = f.export_ident;
+    let entry_point = f.ident.export_name;
     let out_type = convert_polytype(f.output.as_ref());
     let doc = formatdoc! {"
         [DllImport(\"{lib_name}\", EntryPoint = \"{entry_point}\", CallingConvention = CallingConvention.Cdecl)]
