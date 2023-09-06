@@ -11,6 +11,7 @@ pub fn polyfn(_attr: TokenStream, item: &syn::ItemFn) -> proc_macro2::TokenStrea
     }
 
     // generate random id to prevent exported name collisions
+    // this can be replaced with the module name once available in proc macros
     let rand_id: String = Alphanumeric.sample_string(&mut rand::thread_rng(), 6);
 
     let ident = &item.sig.ident;
