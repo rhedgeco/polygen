@@ -24,8 +24,8 @@ impl PolygenCSharp {
             namespace {namespace}
             {{
                 polygen-inner
-            }}"
-        };
+            }}
+        "};
 
         let inner = render_module(&self.lib_name, self.bag.root_module());
         doc.replace("polygen-inner", &indent_by(4, inner))
