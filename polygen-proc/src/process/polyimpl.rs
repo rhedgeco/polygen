@@ -115,11 +115,16 @@ pub fn polyimpl(_attr: TokenStream, item: &syn::ItemImpl) -> proc_macro2::TokenS
                     }
                 });
                 functions.push(quote! {
-                    ::polygen::items::ImplFn {
-                        name: stringify!(#ident),
-                        export_name: stringify!(#export_ident),
-                        inputs: &[#polyfields],
-                        output: #polyout,
+                    ::polygen::items::PolyFn {
+                        ident: ::polygen::items::PolyIdent {
+                            module: module_path!(),
+                            name: stringify!(#ident),
+                            export_name: stringify!(#export_ident)
+                        },
+                        params: ::polygen::items::FnParams {
+                            inputs: &[#polyfields],
+                            output: #polyout,
+                        }
                     }
                 });
             }

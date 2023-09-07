@@ -1,7 +1,7 @@
 use heck::ToPascalCase;
 use indent::indent_by;
 use indoc::formatdoc;
-use polygen::items::{ImplFn, PolyField, PolyImpl, PolyStruct};
+use polygen::items::{PolyField, PolyFn, PolyImpl, PolyStruct};
 
 use crate::{generator::polytype::convert_polytype, utils};
 
@@ -46,19 +46,19 @@ fn render_struct_field(f: (usize, &PolyField)) -> String {
     format!("private {ty} {name};")
 }
 
-fn render_impl_function(lib_name: impl AsRef<str>, implfn: &ImplFn) -> String {
+fn render_impl_function(lib_name: impl AsRef<str>, implfn: &PolyFn) -> String {
     let lib_name = lib_name.as_ref();
-    let name = implfn.name.to_pascal_case();
-    let entry_point = implfn.export_name;
-    let out_type = convert_polytype(implfn.output.as_ref());
-    let transfer = utils::render_each(implfn.inputs.iter(), ", ", |f| f.name.into());
-    let params = utils::render_each(implfn.inputs.iter(), ", ", render_function_input);
+    let name = implfn.ident.name.to_pascal_case();
+    let entry_point = implfn.ident.export_name;
+    let out_type = convert_polytype(implfn.params.output.as_ref());
+    let transfer = utils::render_each(implfn.params.inputs.iter(), ", ", |f| f.name.into());
+    let params = utils::render_each(implfn.params.inputs.iter(), ", ", render_function_input);
 
-    let function = match implfn.inputs.first() {
+    let function = match implfn.params.inputs.first() {
         Some(f) if f.name == "self" && f.ty.nesting_depth() > 1 => {
             let self_ty = convert_polytype(Some(&f.ty));
             let self_params = utils::render_each(
-                implfn.inputs.iter().filter(|f| f.name != "self"),
+                implfn.params.inputs.iter().filter(|f| f.name != "self"),
                 ", ",
                 render_function_input,
             );

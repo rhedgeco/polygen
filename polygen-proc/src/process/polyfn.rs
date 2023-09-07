@@ -77,8 +77,10 @@ pub fn polyfn(_attr: TokenStream, item: &syn::ItemFn) -> proc_macro2::TokenStrea
                     name: stringify!(#ident),
                     export_name: stringify!(#export_ident)
                 },
-                inputs: &[#polyfields],
-                output: #polyout,
+                params: ::polygen::items::FnParams {
+                    inputs: &[#polyfields],
+                    output: #polyout,
+                }
             };
         }
 

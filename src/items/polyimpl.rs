@@ -1,14 +1,6 @@
-use super::{PolyField, PolyType};
+use super::PolyFn;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolyImpl {
-    pub functions: &'static [ImplFn],
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct ImplFn {
-    pub name: &'static str,
-    pub export_name: &'static str,
-    pub inputs: &'static [PolyField],
-    pub output: Option<PolyType>,
+    pub functions: &'static [PolyFn],
 }
