@@ -37,7 +37,7 @@ pub fn polyimpl(_attr: TokenStream, item: &syn::ItemImpl) -> proc_macro2::TokenS
                             };
                             let mutability = rec.mutability;
                             fn_args.push(quote_spanned! { rec.span() =>
-                                __polygen_self: #reference #mutability #self_ty
+                                __polygen_self: <#reference #mutability #self_ty as ::polygen::__private::ExportedPolyType>::ExportedType
                             });
                             into_args.push(quote_spanned! { rec.span() =>
                                 __polygen_self.into()

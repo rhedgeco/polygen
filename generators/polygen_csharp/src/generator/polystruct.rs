@@ -51,31 +51,40 @@ fn render_impl_function(lib_name: impl AsRef<str>, implfn: &ImplFn) -> String {
     let name = implfn.name.to_pascal_case();
     let entry_point = implfn.export_name;
     let out_type = convert_polytype(implfn.output.as_ref());
-    let static_keyword = match implfn.inputs.get(0) {
-        Some(input) if input.name == "self" => "",
-        _ => " static",
-    };
-
-    let mut out = formatdoc! {"
-        [DllImport(\"{lib_name}\", CallingConvention = CallingConvention.Cdecl)]
-        private static {out_type} {entry_point}(polygen-params);
-        public{static_keyword} {out_type} {name}(polygen-self-params) {{
-            return {entry_point}(polygen-transfer);
-        }}"
-    };
-
+    let transfer = utils::render_each(implfn.inputs.iter(), ", ", |f| f.name.into());
     let params = utils::render_each(implfn.inputs.iter(), ", ", render_function_input);
-    let transfer = utils::render_each(implfn.inputs.iter(), ", ", |f| match f.name {
-        "self" => format!("this"),
-        name => name.to_string(),
-    });
-    let self_params = utils::render_each(
-        implfn.inputs.iter().filter(|f| f.name != "self"),
-        ", ",
-        render_function_input,
-    );
-    out = out.replace("polygen-params", &params);
-    out = out.replace("polygen-transfer", &transfer);
-    out = out.replace("polygen-self-params", &self_params);
-    out
+
+    let function = match implfn.inputs.first() {
+        Some(f) if f.name == "self" && f.ty.nesting_depth() > 1 => {
+            let self_ty = convert_polytype(Some(&f.ty));
+            let self_params = utils::render_each(
+                implfn.inputs.iter().filter(|f| f.name != "self"),
+                ", ",
+                render_function_input,
+            );
+
+            formatdoc! {"
+                public {out_type} {name}({self_params})
+                {{
+                    fixed ({self_ty} self = &this)
+                    {{
+                        return {entry_point}({transfer});
+                    }}
+                }}"
+            }
+        }
+        _ => formatdoc! {"
+            public static {out_type} {name}({params})
+            {{
+                return {entry_point}({transfer});
+            }}"
+        },
+    };
+
+    let external = formatdoc! {"
+        [DllImport(\"{lib_name}\", CallingConvention = CallingConvention.Cdecl)]
+        private static {out_type} {entry_point}({params});"
+    };
+
+    format!("{external}\n{function}")
 }

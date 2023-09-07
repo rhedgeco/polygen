@@ -35,8 +35,8 @@ impl TestStruct {
         TestStruct(42, 42)
     }
 
-    pub fn new_with(item: u32) -> TestStruct {
-        Self(item, 42)
+    pub fn new_with(item: &&u32) -> TestStruct {
+        Self(**item, 42)
     }
 
     pub fn get_item(&self) -> u32 {
@@ -48,6 +48,10 @@ impl TestStruct {
     }
 
     pub fn builder(&mut self) -> &mut Self {
+        self
+    }
+
+    pub fn also_builder(self) -> Self {
         self
     }
 }

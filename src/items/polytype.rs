@@ -12,6 +12,15 @@ pub enum PolyType {
 }
 
 impl PolyType {
+    pub fn nesting_depth(&self) -> usize {
+        match self {
+            Self::Struct(_) => 1,
+            Self::Ref(t) | Self::RefMut(t) | Self::PtrMut(t) | Self::PtrConst(t) => {
+                1 + t.nesting_depth()
+            }
+        }
+    }
+
     pub fn root_struct(&self) -> &PolyStruct {
         match self {
             Self::Struct(s) => s,
