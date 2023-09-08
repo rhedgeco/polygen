@@ -1,5 +1,5 @@
-mod opaque;
+mod polybox;
 mod primitives;
 
-pub use opaque::*;
+pub use polybox::*;
 pub use primitives::*;

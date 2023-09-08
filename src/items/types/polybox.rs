@@ -11,11 +11,25 @@ use crate::{
 #[error("PolyBox points to a null reference")]
 pub struct NullError;
 
-pub struct Opaque<T: 'static> {
+pub struct PolyBox<T: 'static> {
     item: *mut T,
 }
 
-impl<T: 'static> Opaque<T> {
+impl<T: 'static> PolyBox<T> {
+    pub fn new(item: T) -> Self {
+        Self {
+            item: Box::into_raw(Box::new(item)),
+        }
+    }
+
+    pub fn into_item(self) -> Result<T, NullError> {
+        if self.item.is_null() {
+            return Err(NullError);
+        }
+
+        Ok(unsafe { *Box::from_raw(self.item) })
+    }
+
     pub fn as_ref(&self) -> Result<&T, NullError> {
         if self.item.is_null() {
             return Err(NullError);
@@ -35,14 +49,14 @@ impl<T: 'static> Opaque<T> {
 
 #[repr(C)]
 #[doc(hidden)]
-pub struct OpaqueUntyped {
+pub struct PolyBoxUntyped {
     id: u64,
     item: usize,
 }
 
 #[doc(hidden)]
-impl<T: 'static> From<Opaque<T>> for OpaqueUntyped {
-    fn from(value: Opaque<T>) -> Self {
+impl<T: 'static> From<PolyBox<T>> for PolyBoxUntyped {
+    fn from(value: PolyBox<T>) -> Self {
         Self {
             id: unsafe { std::mem::transmute(TypeId::of::<T>()) },
             item: value.item as usize,
@@ -51,27 +65,27 @@ impl<T: 'static> From<Opaque<T>> for OpaqueUntyped {
 }
 
 #[doc(hidden)]
-impl<T: 'static> Into<Opaque<T>> for OpaqueUntyped {
-    fn into(self) -> Opaque<T> {
+impl<T: 'static> Into<PolyBox<T>> for PolyBoxUntyped {
+    fn into(self) -> PolyBox<T> {
         let mut item = 0;
         let id: TypeId = unsafe { std::mem::transmute(self.id) };
         if id == TypeId::of::<T>() {
             item = self.item
         }
 
-        Opaque {
+        PolyBox {
             item: item as *mut T,
         }
     }
 }
 
-unsafe impl<T: 'static> ExportedPolyStruct for Opaque<T> {
-    type ExportedType = OpaqueUntyped;
+unsafe impl<T: 'static> ExportedPolyStruct for PolyBox<T> {
+    type ExportedType = PolyBoxUntyped;
     const STRUCT: PolyStruct = PolyStruct {
         ident: PolyIdent {
-            module: "root::polygen",
-            name: "Opaque",
-            export_name: "Opaque",
+            module: "::polygen",
+            name: "PolyBox",
+            export_name: "PolyBox",
         },
         fields: &[
             PolyField {

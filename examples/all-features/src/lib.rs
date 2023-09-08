@@ -1,4 +1,4 @@
-use polygen::{items::types::Opaque, polygen};
+use polygen::{items::types::PolyBox, polygen};
 
 #[polygen]
 pub struct TestStruct(u32, u64);
@@ -14,7 +14,7 @@ pub struct TestStruct3 {
 }
 
 #[polygen]
-pub fn test(_thing: Opaque<TestStruct3>, _thing2: sub_module::TestStruct) -> TestStruct2 {
+pub fn test(_thing: PolyBox<TestStruct3>, _thing2: sub_module::TestStruct) -> TestStruct2 {
     todo!()
 }
 
