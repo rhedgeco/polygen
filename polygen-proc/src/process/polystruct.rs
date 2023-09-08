@@ -41,9 +41,9 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
                 compile_error!("Empty structs are not FFI safe.");
             }
         }
-        F::Unnamed(f) if f.unnamed.len() == 0 => {
+        F::Unnamed(_) => {
             return quote_spanned! { ident.span() =>
-                compile_error!("Empty tuple structs are not FFI safe.");
+                compile_error!("Tuple structs are currently unsupported by #[polygen]");
             }
         }
         F::Named(f) => {
@@ -78,41 +78,6 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
                 impl Into<#ident> for #export_ident {
                     fn into(self) -> #ident {
                         #ident { #into_fields }
-                    }
-                }
-            });
-        }
-        F::Unnamed(f) => {
-            let mut from_fields = quote!();
-            let mut into_fields = quote!();
-            for (i, field) in f.unnamed.iter().enumerate() {
-                let ty = &field.ty;
-                let exp_ty = make_exp(ty);
-                let index = syn::Index::from(i);
-                let ident = syn::Ident::new(&format!("_tuple{i}"), ty.span());
-                from_fields.append_all(quote_spanned! { ty.span() =>
-                    #ident: #exp_ty::from(value.#index),
-                });
-                into_fields.append_all(quote_spanned! { ty.span() =>
-                    #exp_ty::into(self.#ident),
-                });
-                export_fields.append_all(quote_spanned!( ty.span() => #ident: #exp_ty, ));
-                poly_fields.append_all(quote_spanned! { ty.span() =>
-                    ::polygen::items::PolyField {
-                        name: stringify!(#ident),
-                        ty: <#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
-                    },
-                });
-            }
-            output.append_all(quote! {
-                impl From<#ident> for #export_ident {
-                    fn from(value: #ident) -> Self {
-                        Self { #from_fields }
-                    }
-                }
-                impl Into<#ident> for #export_ident {
-                    fn into(self) -> #ident {
-                        #ident ( #into_fields )
                     }
                 }
             });

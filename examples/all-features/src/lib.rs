@@ -1,14 +1,16 @@
 use polygen::{items::types::PolyBox, polygen};
 
 #[polygen]
-pub struct TestStruct(u32, u64);
+pub struct TestStruct {
+    x0: u32,
+    x1: u64,
+}
 
 #[polygen]
 pub struct TestStruct2 {
     _test: TestStruct,
 }
 
-#[polygen]
 pub struct TestStruct3 {
     _test: u64,
 }
@@ -22,7 +24,10 @@ pub mod sub_module {
     use super::*;
 
     #[polygen]
-    pub struct TestStruct(u32, u64);
+    pub struct TestStruct {
+        x0: u32,
+        x1: u64,
+    }
 
     #[polygen]
     pub fn test(_thing: TestStruct, thing2: TestStruct2) -> TestStruct2 {
