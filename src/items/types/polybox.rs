@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::{
     __private::ExportedPolyStruct,
-    items::{PolyField, PolyIdent, PolyStruct},
+    items::{PolyField, PolyStruct},
 };
 
 #[derive(Debug, Error)]
@@ -82,11 +82,8 @@ impl<T: 'static> Into<PolyBox<T>> for PolyBoxUntyped {
 unsafe impl<T: 'static> ExportedPolyStruct for PolyBox<T> {
     type ExportedType = PolyBoxUntyped;
     const STRUCT: PolyStruct = PolyStruct {
-        ident: PolyIdent {
-            module: "::polygen",
-            name: "PolyBox",
-            export_name: "PolyBox",
-        },
+        module: "::polygen",
+        name: "PolyBox",
         fields: &[
             PolyField {
                 name: "id",

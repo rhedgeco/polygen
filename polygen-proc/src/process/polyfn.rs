@@ -73,11 +73,9 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
         pub struct #ident {}
         unsafe impl ::polygen::__private::ExportedPolyFn for #ident {
             const FUNCTION: ::polygen::items::PolyFn = ::polygen::items::PolyFn {
-                ident: ::polygen::items::PolyIdent {
-                    module: module_path!(),
-                    name: stringify!(#ident),
-                    export_name: stringify!(#export_ident)
-                },
+                module: module_path!(),
+                name: stringify!(#ident),
+                export_name: stringify!(#export_ident),
                 params: ::polygen::items::FnParams {
                     inputs: &[#polyfields],
                     output: #polyout,

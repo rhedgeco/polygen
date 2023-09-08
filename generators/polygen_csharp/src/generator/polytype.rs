@@ -4,12 +4,12 @@ use polygen::items::PolyStruct;
 pub fn convert_typename(s: Option<&PolyStruct>) -> String {
     let Some(s) = s else { return format!("void") };
     let mut module = String::new();
-    for mod_name in s.ident.module.split("::").skip(1) {
+    for mod_name in s.module.split("::").skip(1) {
         let mod_name = mod_name.to_pascal_case();
         module += &format!("{mod_name}.");
     }
 
-    let ident = match s.ident.export_name {
+    let ident = match s.name {
         "u8" => "byte".into(),
         "u16" => "ushort".into(),
         "u32" => "uint".into(),

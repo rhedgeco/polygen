@@ -5,11 +5,8 @@ macro_rules! impl_item {
             unsafe impl $crate::__private::ExportedPolyStruct for $item {
                 type ExportedType = $item;
                 const STRUCT: $crate::items::PolyStruct = $crate::items::PolyStruct {
-                    ident: $crate::items::PolyIdent {
-                        module: "std",
-                        name: stringify!($item),
-                        export_name: stringify!($item),
-                    },
+                    module: "std",
+                    name: stringify!($item),
                     fields: &[],
                 };
             }

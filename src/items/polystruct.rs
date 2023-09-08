@@ -1,23 +1,23 @@
 use std::hash::Hash;
 
-use super::PolyIdent;
-
 #[derive(Debug, Clone, Copy)]
 pub struct PolyStruct {
-    pub ident: PolyIdent,
+    pub module: &'static str,
+    pub name: &'static str,
     pub fields: &'static [PolyField],
 }
 
 impl Eq for PolyStruct {}
 impl PartialEq for PolyStruct {
     fn eq(&self, other: &Self) -> bool {
-        self.ident == other.ident
+        self.module == self.module && self.name == other.name
     }
 }
 
 impl Hash for PolyStruct {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.ident.hash(state);
+        self.module.hash(state);
+        self.name.hash(state);
     }
 }
 

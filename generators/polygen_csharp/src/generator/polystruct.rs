@@ -9,7 +9,7 @@ use super::polyfn::render_function_input;
 
 pub fn render_struct(lib_name: impl AsRef<str>, s: &PolyStruct, i: Option<&PolyImpl>) -> String {
     // crate struct template
-    let ident = s.ident.export_name.to_pascal_case();
+    let ident = s.name.to_pascal_case();
     let doc = formatdoc! {"
         public struct {ident}
         {{
@@ -47,8 +47,8 @@ fn render_struct_field((index, field): (usize, &PolyField)) -> String {
 
 fn render_impl_function(lib_name: impl AsRef<str>, implfn: &PolyFn) -> String {
     let lib_name = lib_name.as_ref();
-    let name = implfn.ident.name.to_pascal_case();
-    let entry_point = implfn.ident.export_name;
+    let name = implfn.name.to_pascal_case();
+    let entry_point = implfn.export_name;
     let out_type = convert_typename(implfn.params.output.as_ref());
     let transfer = utils::render_each(implfn.params.inputs.iter(), ", ", |f| f.name.into());
     let params = utils::render_each(implfn.params.inputs.iter(), ", ", render_function_input);

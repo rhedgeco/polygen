@@ -94,11 +94,8 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
         unsafe impl ::polygen::__private::ExportedPolyStruct for #ident {
             type ExportedType = #export_ident;
             const STRUCT: ::polygen::items::PolyStruct = ::polygen::items::PolyStruct {
-                ident: ::polygen::items::PolyIdent {
-                    module: module_path!(),
-                    name: stringify!(#ident),
-                    export_name: stringify!(#ident),
-                },
+                module: module_path!(),
+                name: stringify!(#ident),
                 fields: &[#poly_fields],
             };
         }

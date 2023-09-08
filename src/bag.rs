@@ -23,7 +23,7 @@ impl PolyBag {
         let r#impl = T::IMPL;
         let r#struct = T::STRUCT;
 
-        let target_mod = self.module.get_target_mod(r#struct.ident.module);
+        let target_mod = self.module.get_target_mod(r#struct.module);
         target_mod.structs.insert(r#struct, Some(r#impl));
         self
     }
@@ -35,7 +35,7 @@ impl PolyBag {
         // register all its inputs
         for input in func.params.inputs {
             // let root_struct = input.ty.root_struct();
-            let target_mod = self.module.get_target_mod(input.ty.ident.module);
+            let target_mod = self.module.get_target_mod(input.ty.module);
             if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(input.ty) {
                 e.insert(None);
             }
@@ -43,14 +43,14 @@ impl PolyBag {
 
         // register its output
         if let Some(out) = &func.params.output {
-            let target_mod = self.module.get_target_mod(out.ident.module);
+            let target_mod = self.module.get_target_mod(out.module);
             if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*out) {
                 e.insert(None);
             }
         }
 
         // insert the function
-        let target_mod = self.module.get_target_mod(func.ident.module);
+        let target_mod = self.module.get_target_mod(func.module);
         target_mod.functions.insert(*func);
         self
     }
