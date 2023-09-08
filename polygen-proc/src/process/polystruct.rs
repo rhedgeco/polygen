@@ -1,8 +1,9 @@
-use proc_macro::TokenStream;
-use quote::{quote, quote_spanned};
-use syn::{punctuated::Punctuated, spanned::Spanned, Token};
+use quote::{quote, quote_spanned, TokenStreamExt};
+use syn::spanned::Spanned;
 
-pub fn polystruct(_attr: TokenStream, item: &syn::ItemStruct) -> proc_macro2::TokenStream {
+use super::PolyAttr;
+
+pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::TokenStream {
     // fail on generics
     if !item.generics.params.empty_or_trailing() {
         return quote_spanned! { item.generics.params.span() =>
@@ -13,93 +14,130 @@ pub fn polystruct(_attr: TokenStream, item: &syn::ItemStruct) -> proc_macro2::To
     // get useful items
     let ident = &item.ident;
     let fields = &item.fields;
-    let semi_token = &item.semi_token;
     let export_ident = syn::Ident::new(&format!("__polygen_struct_{ident}"), ident.span());
 
-    // create fields needed for construction
-    let from_convert;
-    let into_convert;
-    let mut polyfields = Punctuated::<proc_macro2::TokenStream, Token![,]>::new();
-    match fields {
-        syn::Fields::Named(fields) if fields.named.len() > 0 => {
-            let mut from_fields = Punctuated::<syn::FieldValue, Token![,]>::new();
-            let mut into_fields = Punctuated::<syn::FieldValue, Token![,]>::new();
-            for field in &fields.named {
-                let ty = &field.ty;
-                let ident = match &field.ident {
-                    Some(ident) => format!("{ident}"),
-                    None => format!("_"),
-                };
+    // create initial output stream
+    let mut output = quote!();
 
-                let syn_ident = syn::Ident::new(&ident, field.ident.span());
-                from_fields.push(syn::parse_quote!( #syn_ident: value.#syn_ident ));
-                into_fields.push(syn::parse_quote!( #syn_ident: self.#syn_ident ));
-                polyfields.push(quote_spanned! { field.ident.span() =>
-                    ::polygen::items::PolyField {
-                        name: #ident,
-                        ty: <#ty as ::polygen::__private::ExportedPolyType>::TYPE,
-                    }
-                })
-            }
-            from_convert = quote!(Self { #from_fields } );
-            into_convert = quote!( #ident { #into_fields } );
+    // create helper type for forcing exported type
+    let make_exp = |t: &syn::Type| -> syn::Type {
+        syn::parse_quote_spanned! { t.span() =>
+            <#t as ::polygen::__private::ExportedPolyStruct>::ExportedType
         }
-        syn::Fields::Unnamed(fields) if fields.unnamed.len() > 0 => {
-            let mut from_fields = Punctuated::<syn::Expr, Token![,]>::new();
-            let mut into_fields = Punctuated::<syn::Expr, Token![,]>::new();
-            for (i, field) in fields.unnamed.iter().enumerate() {
-                let ty = &field.ty;
-                let syn_index = syn::Index::from(i);
-                from_fields.push(syn::parse_quote!( value.#syn_index ));
-                into_fields.push(syn::parse_quote!( self.#syn_index ));
-                polyfields.push(quote_spanned! { field.ident.span() =>
-                    ::polygen::items::PolyField {
-                        name: "_",
-                        ty: <#ty as ::polygen::__private::ExportedPolyType>::TYPE,
-                    }
-                })
-            }
-            from_convert = quote!(Self ( #from_fields ) );
-            into_convert = quote!( #ident ( #into_fields ) );
-        }
-        _ => {
+    };
+
+    // collect field data for construction
+    let mut export_fields = quote!();
+    let mut poly_fields = quote!();
+    use syn::Fields as F;
+    match fields {
+        F::Unit => {
             return quote_spanned! { ident.span() =>
                 compile_error!("Unit structs are not FFI safe.");
-            };
+            }
         }
-    }
+        F::Named(f) if f.named.len() == 0 => {
+            return quote_spanned! { ident.span() =>
+                compile_error!("Empty structs are not FFI safe.");
+            }
+        }
+        F::Unnamed(f) if f.unnamed.len() == 0 => {
+            return quote_spanned! { ident.span() =>
+                compile_error!("Empty tuple structs are not FFI safe.");
+            }
+        }
+        F::Named(f) => {
+            let mut from_fields = quote!();
+            let mut into_fields = quote!();
+            for field in f.named.iter() {
+                let ty = &field.ty;
+                let exp_ty = make_exp(ty);
+                let Some(ident) = &field.ident else {
+                    unreachable!(); // named structs will always have an ident
+                };
+                from_fields.append_all(quote_spanned! { ty.span() =>
+                    #ident: #exp_ty::from(value.#ident),
+                });
+                into_fields.append_all(quote_spanned! { ty.span() =>
+                    #ident: #exp_ty::into(self.#ident),
+                });
+                export_fields.append_all(quote_spanned!( ty.span() => #ident: #exp_ty, ));
+                poly_fields.append_all(quote_spanned! { ty.span() =>
+                    ::polygen::items::PolyField {
+                        name: stringify!(#ident),
+                        ty: <#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
+                    },
+                });
+            }
+            output.append_all(quote! {
+                impl From<#ident> for #export_ident {
+                    fn from(value: #ident) -> Self {
+                        Self { #from_fields }
+                    }
+                }
+                impl Into<#ident> for #export_ident {
+                    fn into(self) -> #ident {
+                        #ident { #into_fields }
+                    }
+                }
+            });
+        }
+        F::Unnamed(f) => {
+            let mut from_fields = quote!();
+            let mut into_fields = quote!();
+            for (i, field) in f.unnamed.iter().enumerate() {
+                let ty = &field.ty;
+                let exp_ty = make_exp(ty);
+                let index = syn::Index::from(i);
+                let ident = syn::Ident::new(&format!("_tuple{i}"), ty.span());
+                from_fields.append_all(quote_spanned! { ty.span() =>
+                    #ident: #exp_ty::from(value.#index),
+                });
+                into_fields.append_all(quote_spanned! { ty.span() =>
+                    #exp_ty::into(self.#ident),
+                });
+                export_fields.append_all(quote_spanned!( ty.span() => #ident: #exp_ty, ));
+                poly_fields.append_all(quote_spanned! { ty.span() =>
+                    ::polygen::items::PolyField {
+                        name: stringify!(#ident),
+                        ty: <#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
+                    },
+                });
+            }
+            output.append_all(quote! {
+                impl From<#ident> for #export_ident {
+                    fn from(value: #ident) -> Self {
+                        Self { #from_fields }
+                    }
+                }
+                impl Into<#ident> for #export_ident {
+                    fn into(self) -> #ident {
+                        #ident ( #into_fields )
+                    }
+                }
+            });
+        }
+    };
 
-    quote! {
-        // create proxy type that will be exported
+    output.append_all(quote! {
         #[repr(C)]
         #[doc(hidden)]
-        pub struct #export_ident #fields #semi_token
-
-        // implement from and into for easy conversions
-        impl From<#ident> for #export_ident {
-            fn from(value: #ident) -> Self {
-                #from_convert
-            }
-        }
-        impl Into<#ident> for #export_ident {
-            fn into(self) -> #ident {
-                #into_convert
-            }
+        pub struct #export_ident {
+            #export_fields
         }
 
-        // implement the export type to be used by compiler
-        unsafe impl ::polygen::__private::ExportedPolyType for #ident {
+        unsafe impl ::polygen::__private::ExportedPolyStruct for #ident {
             type ExportedType = #export_ident;
-            const TYPE: ::polygen::items::PolyType = ::polygen::items::PolyType::Struct(
-                ::polygen::items::PolyStruct {
-                    ident: ::polygen::items::PolyIdent {
-                        module: module_path!(),
-                        name: stringify!(#ident),
-                        export_name: stringify!(#ident),
-                    },
-                    fields: &[#polyfields],
-                }
-            );
+            const STRUCT: ::polygen::items::PolyStruct = ::polygen::items::PolyStruct {
+                ident: ::polygen::items::PolyIdent {
+                    module: module_path!(),
+                    name: stringify!(#ident),
+                    export_name: stringify!(#ident),
+                },
+                fields: &[#poly_fields],
+            };
         }
-    }
+    });
+
+    output
 }

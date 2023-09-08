@@ -1,9 +1,10 @@
-use proc_macro::TokenStream;
 use quote::{quote, quote_spanned, ToTokens};
 use rand::distributions::{Alphanumeric, DistString};
 use syn::{punctuated::Punctuated, spanned::Spanned, Token};
 
-pub fn polyfn(_attr: TokenStream, item: &syn::ItemFn) -> proc_macro2::TokenStream {
+use super::PolyAttr;
+
+pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream {
     if !item.sig.generics.params.empty_or_trailing() {
         return quote_spanned! { item.sig.generics.params.span() =>
             compile_error!("Generics are not supported by #[polygen] attribute");
@@ -41,12 +42,12 @@ pub fn polyfn(_attr: TokenStream, item: &syn::ItemFn) -> proc_macro2::TokenStrea
 
                 into_args.push(quote_spanned!( ty.span() => #pat_ident.into() ));
                 fn_args.push(quote_spanned! { ty.span() =>
-                    #pat_ident: <#ty as ::polygen::__private::ExportedPolyType>::ExportedType
+                    #pat_ident: <#ty as ::polygen::__private::ExportedPolyStruct>::ExportedType
                 });
                 polyfields.push(quote_spanned! { ty.span() =>
                     ::polygen::items::PolyField {
                         name: stringify!(#pat_ident),
-                        ty: <#ty as ::polygen::__private::ExportedPolyType>::TYPE,
+                        ty: <#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
                     }
                 });
             }
@@ -58,10 +59,10 @@ pub fn polyfn(_attr: TokenStream, item: &syn::ItemFn) -> proc_macro2::TokenStrea
         syn::ReturnType::Default => (proc_macro2::TokenStream::new(), quote!(None)),
         syn::ReturnType::Type(_, ty) => (
             quote_spanned! { ty.span() =>
-                -> <#ty as ::polygen::__private::ExportedPolyType>::ExportedType
+                -> <#ty as ::polygen::__private::ExportedPolyStruct>::ExportedType
             },
             quote_spanned! { ty.span() =>
-                Some(<#ty as ::polygen::__private::ExportedPolyType>::TYPE)
+                Some(<#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT)
             },
         ),
     };

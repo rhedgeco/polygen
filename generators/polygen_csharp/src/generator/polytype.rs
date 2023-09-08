@@ -1,20 +1,8 @@
 use heck::ToPascalCase;
-use polygen::items::{PolyStruct, PolyType};
+use polygen::items::PolyStruct;
 
-pub fn convert_polytype(t: Option<&PolyType>) -> String {
-    match t {
-        None => format!("void"),
-        Some(PolyType::Struct(s)) => convert_typename(s),
-        Some(PolyType::Ref(t))
-        | Some(PolyType::RefMut(t))
-        | Some(PolyType::PtrMut(t))
-        | Some(PolyType::PtrConst(t)) => {
-            format!("{}*", convert_polytype(Some(t)))
-        }
-    }
-}
-
-fn convert_typename(s: &PolyStruct) -> String {
+pub fn convert_typename(s: Option<&PolyStruct>) -> String {
+    let Some(s) = s else { return format!("void") };
     let mut module = String::new();
     for mod_name in s.ident.module.split("::").skip(1) {
         let mod_name = mod_name.to_pascal_case();

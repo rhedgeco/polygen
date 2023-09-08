@@ -20,12 +20,11 @@ impl PolyBag {
     }
 
     pub fn register_impl<T: ExportedPolyImpl>(mut self) -> Self {
-        let r#type = T::TYPE;
         let r#impl = T::IMPL;
-        let root_struct = r#type.root_struct();
+        let r#struct = T::STRUCT;
 
-        let target_mod = self.module.get_target_mod(root_struct.ident.module);
-        target_mod.structs.insert(*root_struct, Some(r#impl));
+        let target_mod = self.module.get_target_mod(r#struct.ident.module);
+        target_mod.structs.insert(r#struct, Some(r#impl));
         self
     }
 
@@ -35,18 +34,17 @@ impl PolyBag {
 
         // register all its inputs
         for input in func.params.inputs {
-            let root_struct = input.ty.root_struct();
-            let target_mod = self.module.get_target_mod(root_struct.ident.module);
-            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*root_struct) {
+            // let root_struct = input.ty.root_struct();
+            let target_mod = self.module.get_target_mod(input.ty.ident.module);
+            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(input.ty) {
                 e.insert(None);
             }
         }
 
         // register its output
         if let Some(out) = &func.params.output {
-            let root_struct = out.root_struct();
-            let target_mod = self.module.get_target_mod(root_struct.ident.module);
-            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*root_struct) {
+            let target_mod = self.module.get_target_mod(out.ident.module);
+            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*out) {
                 e.insert(None);
             }
         }

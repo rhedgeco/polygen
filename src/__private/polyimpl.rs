@@ -1,7 +1,7 @@
 use crate::items::PolyImpl;
 
-use super::ExportedPolyType;
+use super::ExportedPolyStruct;
 
-pub unsafe trait ExportedPolyImpl: ExportedPolyType {
+pub unsafe trait ExportedPolyImpl: ExportedPolyStruct {
     const IMPL: PolyImpl;
 }

@@ -1,28 +1,28 @@
 use std::hash::Hash;
 
-use super::{PolyField, PolyIdent, PolyStruct};
+use super::PolyIdent;
 
 #[derive(Debug, Clone, Copy)]
-pub struct PolyFn {
+pub struct PolyStruct {
     pub ident: PolyIdent,
-    pub params: FnParams,
+    pub fields: &'static [PolyField],
 }
 
-impl Eq for PolyFn {}
-impl PartialEq for PolyFn {
+impl Eq for PolyStruct {}
+impl PartialEq for PolyStruct {
     fn eq(&self, other: &Self) -> bool {
         self.ident == other.ident
     }
 }
 
-impl Hash for PolyFn {
+impl Hash for PolyStruct {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.ident.hash(state);
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct FnParams {
-    pub inputs: &'static [PolyField],
-    pub output: Option<PolyStruct>,
+pub struct PolyField {
+    pub name: &'static str,
+    pub ty: PolyStruct,
 }

@@ -1,7 +1,7 @@
 mod polyfn;
 mod polyimpl;
-mod polytype;
+mod polystruct;
 
 pub use polyfn::*;
 pub use polyimpl::*;
-pub use polytype::*;
+pub use polystruct::*;
