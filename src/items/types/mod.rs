@@ -1,5 +1,5 @@
-mod r#box;
+mod opaque;
 mod primitives;
 
+pub use opaque::*;
 pub use primitives::*;
-pub use r#box::*;
