@@ -65,7 +65,7 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
                 poly_fields.append_all(quote_spanned! { ty.span() =>
                     ::polygen::items::PolyField {
                         name: stringify!(#ident),
-                        ty: <#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
+                        ty: &<#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
                     },
                 });
             }

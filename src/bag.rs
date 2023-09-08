@@ -36,7 +36,7 @@ impl PolyBag {
         for input in func.params.inputs {
             // let root_struct = input.ty.root_struct();
             let target_mod = self.module.get_target_mod(input.ty.module);
-            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(input.ty) {
+            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*input.ty) {
                 e.insert(None);
             }
         }

@@ -47,7 +47,7 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
                 polyfields.push(quote_spanned! { ty.span() =>
                     ::polygen::items::PolyField {
                         name: stringify!(#pat_ident),
-                        ty: <#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
+                        ty: &<#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
                     }
                 });
             }

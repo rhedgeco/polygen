@@ -24,5 +24,5 @@ impl Hash for PolyStruct {
 #[derive(Debug, Clone, Copy)]
 pub struct PolyField {
     pub name: &'static str,
-    pub ty: PolyStruct,
+    pub ty: &'static PolyStruct,
 }

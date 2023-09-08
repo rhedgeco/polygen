@@ -87,11 +87,11 @@ unsafe impl<T: 'static> ExportedPolyStruct for PolyBox<T> {
         fields: &[
             PolyField {
                 name: "id",
-                ty: <u64 as ExportedPolyStruct>::STRUCT,
+                ty: &<u64 as ExportedPolyStruct>::STRUCT,
             },
             PolyField {
                 name: "item",
-                ty: <usize as ExportedPolyStruct>::STRUCT,
+                ty: &<usize as ExportedPolyStruct>::STRUCT,
             },
         ],
     };
