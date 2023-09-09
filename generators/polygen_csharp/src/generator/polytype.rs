@@ -29,11 +29,17 @@ pub fn convert_typename(s: Option<&PolyStruct>) -> String {
         "f64" => "double".into(),
 
         ident => {
-            let generics = utils::render_each(s.generics.iter(), ", ", |g| {
-                let gen_field = s.fields.iter().find(|f| f.ty_name == *g).unwrap();
-                convert_typename(Some(gen_field.ty))
-            });
-            format!("{ident}<{generics}>")
+            let generics = if s.generics.is_empty() {
+                format!("")
+            } else {
+                let generics = utils::render_each(s.generics.iter(), ", ", |g| {
+                    let gen_field = s.fields.iter().find(|f| f.ty_name == *g).unwrap();
+                    convert_typename(Some(gen_field.ty))
+                });
+                format!("<{generics}>")
+            };
+
+            format!("{ident}{generics}")
         }
     };
 

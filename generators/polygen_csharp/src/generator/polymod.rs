@@ -18,7 +18,7 @@ pub fn render_module(lib_name: &str, m: &PolyMod) -> String {
 
     let mut inner = Vec::new();
     inner.push(utils::render_each(m.structs(), "\n\n", |s| {
-        render_struct(lib_name, s.0, s.1.as_ref())
+        render_struct(lib_name, s)
     }));
     inner.push(utils::render_each(m.functions(), "\n\n", |f| {
         render_function(lib_name, f)

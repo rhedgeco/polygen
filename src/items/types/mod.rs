@@ -1,5 +1,7 @@
-mod polybox;
+mod opaque;
 mod primitives;
+mod typeid;
 
-pub use polybox::*;
+pub use opaque::*;
 pub use primitives::*;
+pub use typeid::*;

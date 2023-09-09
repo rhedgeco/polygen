@@ -1,6 +1,6 @@
 use std::fs;
 
-use all_features::convert;
+use all_features::{convert, test};
 use polygen::PolyBag;
 use polygen_csharp::PolygenCSharp;
 
@@ -9,7 +9,9 @@ fn bind() {
     let csharp = PolygenCSharp {
         lib_name: format!("all_features"),
         namespace: format!("AllFeatures"),
-        bag: PolyBag::new("Native").register_function::<convert>(),
+        bag: PolyBag::new("Native")
+            .register_function::<convert>()
+            .register_function::<test>(),
     };
 
     fs::create_dir_all("./target/polygen").unwrap();

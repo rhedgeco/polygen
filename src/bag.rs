@@ -1,8 +1,8 @@
 use indexmap::{IndexMap, IndexSet};
 
 use crate::{
-    __private::{ExportedPolyFn, ExportedPolyImpl},
-    items::{types::is_primitive, PolyFn, PolyImpl, PolyStruct},
+    __private::ExportedPolyFn,
+    items::{types::is_primitive, PolyFn, PolyStruct},
 };
 
 pub struct PolyBag {
@@ -19,44 +19,40 @@ impl PolyBag {
         &self.module
     }
 
-    pub fn register_impl<T: ExportedPolyImpl>(mut self) -> Self {
-        let r#impl = T::IMPL;
-        let r#struct = T::STRUCT;
-
-        let target_mod = self.module.get_target_mod(r#struct.module);
-        target_mod.structs.insert(r#struct, Some(r#impl));
-        self
-    }
-
     pub fn register_function<T: ExportedPolyFn>(mut self) -> Self {
         // get reference to the function
         let func = &T::FUNCTION;
 
         // register all its inputs
         for input in func.params.inputs {
-            if is_primitive(input.ty.name) {
-                continue;
-            }
-            let target_mod = self.module.get_target_mod(input.ty.module);
-            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*input.ty) {
-                e.insert(None);
-            }
+            self.register_struct(input.ty);
         }
 
         // register its output
         if let Some(out) = &func.params.output {
-            if !is_primitive(out.name) {
-                let target_mod = self.module.get_target_mod(out.module);
-                if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*out) {
-                    e.insert(None);
-                }
-            }
+            self.register_struct(out);
         }
 
         // insert the function
         let target_mod = self.module.get_target_mod(func.module);
         target_mod.functions.insert(*func);
         self
+    }
+
+    fn register_struct(&mut self, s: &PolyStruct) {
+        // early return if it is a primitive
+        if is_primitive(s.name) {
+            return;
+        }
+
+        // register this struct
+        let target_mod = self.module.get_target_mod(s.module);
+        target_mod.structs.insert(*s);
+
+        // register all nested structs
+        for field in s.fields {
+            self.register_struct(field.ty);
+        }
     }
 }
 
@@ -65,7 +61,7 @@ pub struct PolyMod {
     name: String,
     functions: IndexSet<PolyFn>,
     modules: IndexMap<String, PolyMod>,
-    structs: IndexMap<PolyStruct, Option<PolyImpl>>,
+    structs: IndexSet<PolyStruct>,
 }
 
 impl PolyMod {
@@ -82,7 +78,7 @@ impl PolyMod {
         &self.name
     }
 
-    pub fn structs(&self) -> impl Iterator<Item = (&PolyStruct, &Option<PolyImpl>)> {
+    pub fn structs(&self) -> impl Iterator<Item = &PolyStruct> {
         self.structs.iter()
     }
 

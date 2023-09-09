@@ -87,6 +87,7 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
         #[no_mangle]
         #[doc(hidden)]
         #[allow(non_snake_case)]
+        #[allow(improper_ctypes_definitions)]
         extern "C" fn #export_ident( #fn_args ) #output {
             #ident( #into_args ).into()
         }
