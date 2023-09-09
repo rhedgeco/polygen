@@ -2,7 +2,7 @@ use indexmap::{IndexMap, IndexSet};
 
 use crate::{
     __private::{ExportedPolyFn, ExportedPolyImpl},
-    items::{PolyFn, PolyImpl, PolyStruct},
+    items::{types::is_primitive, PolyFn, PolyImpl, PolyStruct},
 };
 
 pub struct PolyBag {
@@ -34,7 +34,9 @@ impl PolyBag {
 
         // register all its inputs
         for input in func.params.inputs {
-            // let root_struct = input.ty.root_struct();
+            if is_primitive(input.ty.name) {
+                continue;
+            }
             let target_mod = self.module.get_target_mod(input.ty.module);
             if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*input.ty) {
                 e.insert(None);
@@ -43,9 +45,11 @@ impl PolyBag {
 
         // register its output
         if let Some(out) = &func.params.output {
-            let target_mod = self.module.get_target_mod(out.module);
-            if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*out) {
-                e.insert(None);
+            if !is_primitive(out.name) {
+                let target_mod = self.module.get_target_mod(out.module);
+                if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*out) {
+                    e.insert(None);
+                }
             }
         }
 

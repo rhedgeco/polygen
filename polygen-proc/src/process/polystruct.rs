@@ -1,20 +1,40 @@
+use std::collections::BTreeSet;
+
 use quote::{quote, quote_spanned, TokenStreamExt};
 use syn::spanned::Spanned;
 
 use super::PolyAttr;
 
 pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::TokenStream {
-    // fail on generics
-    if !item.generics.params.empty_or_trailing() {
-        return quote_spanned! { item.generics.params.span() =>
-            compile_error!("Generics are not supported by #[polygen] attribute");
-        };
+    let mut generics = BTreeSet::new();
+    let mut export_generics = item.generics.clone();
+    for param in &mut export_generics.params {
+        use syn::GenericParam as G;
+        match param {
+            G::Const(c) => {
+                return quote_spanned! { c.ident.span() =>
+                    compile_error!("Constant generics are not supported by #[polygen] attribute");
+                }
+            }
+            G::Lifetime(l) => {
+                return quote_spanned! { l.lifetime.span() =>
+                    compile_error!("Lifetimes are not supported by #[polygen] attribute");
+                }
+            }
+            G::Type(ty) => {
+                generics.insert(ty.ident.clone());
+                ty.bounds.push(syn::parse_quote! {
+                    ::polygen::__private::ExportedPolyStruct
+                });
+            }
+        }
     }
 
     // get useful items
     let ident = &item.ident;
     let fields = &item.fields;
     let export_ident = syn::Ident::new(&format!("__polygen_struct_{ident}"), ident.span());
+    let (implgen, typegen, wheregen) = export_generics.split_for_impl();
 
     // create initial output stream
     let mut output = quote!();
@@ -65,18 +85,19 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
                 poly_fields.append_all(quote_spanned! { ty.span() =>
                     ::polygen::items::PolyField {
                         name: stringify!(#ident),
+                        ty_name: stringify!(#ty),
                         ty: &<#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
                     },
                 });
             }
             output.append_all(quote! {
-                impl From<#ident> for #export_ident {
-                    fn from(value: #ident) -> Self {
+                impl #implgen From<#ident #typegen> for #export_ident #typegen #wheregen {
+                    fn from(value: #ident #typegen) -> Self {
                         Self { #from_fields }
                     }
                 }
-                impl Into<#ident> for #export_ident {
-                    fn into(self) -> #ident {
+                impl #implgen Into<#ident #typegen> for #export_ident #typegen #wheregen {
+                    fn into(self) -> #ident #typegen {
                         #ident { #into_fields }
                     }
                 }
@@ -87,16 +108,17 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
     output.append_all(quote! {
         #[repr(C)]
         #[doc(hidden)]
-        pub struct #export_ident {
+        pub struct #export_ident #implgen {
             #export_fields
         }
 
-        unsafe impl ::polygen::__private::ExportedPolyStruct for #ident {
-            type ExportedType = #export_ident;
+        unsafe impl #implgen ::polygen::__private::ExportedPolyStruct for #ident #typegen #wheregen {
+            type ExportedType = #export_ident #typegen;
             const STRUCT: ::polygen::items::PolyStruct = ::polygen::items::PolyStruct {
                 module: module_path!(),
                 name: stringify!(#ident),
                 fields: &[#poly_fields],
+                generics: &[#(stringify!(#generics),)*],
             };
         }
     });

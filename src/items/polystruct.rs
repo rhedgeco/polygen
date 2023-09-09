@@ -5,6 +5,7 @@ pub struct PolyStruct {
     pub module: &'static str,
     pub name: &'static str,
     pub fields: &'static [PolyField],
+    pub generics: &'static [&'static str],
 }
 
 impl Eq for PolyStruct {}
@@ -24,5 +25,6 @@ impl Hash for PolyStruct {
 #[derive(Debug, Clone, Copy)]
 pub struct PolyField {
     pub name: &'static str,
+    pub ty_name: &'static str,
     pub ty: &'static PolyStruct,
 }

@@ -1,6 +1,8 @@
 use heck::ToPascalCase;
 use polygen::items::PolyStruct;
 
+use crate::utils;
+
 pub fn convert_typename(s: Option<&PolyStruct>) -> String {
     let Some(s) = s else { return format!("void") };
     let mut module = String::new();
@@ -26,7 +28,13 @@ pub fn convert_typename(s: Option<&PolyStruct>) -> String {
         "f32" => "float".into(),
         "f64" => "double".into(),
 
-        ident => ident.to_pascal_case(),
+        ident => {
+            let generics = utils::render_each(s.generics.iter(), ", ", |g| {
+                let gen_field = s.fields.iter().find(|f| f.ty_name == *g).unwrap();
+                convert_typename(Some(gen_field.ty))
+            });
+            format!("{ident}<{generics}>")
+        }
     };
 
     module + &ident

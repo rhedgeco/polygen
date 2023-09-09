@@ -10,8 +10,9 @@ use super::polyfn::render_function_input;
 pub fn render_struct(lib_name: impl AsRef<str>, s: &PolyStruct, i: Option<&PolyImpl>) -> String {
     // crate struct template
     let ident = s.name.to_pascal_case();
+    let generics = utils::render_each(s.generics.iter(), ", ", |s| s.to_string());
     let doc = formatdoc! {"
-        public struct {ident}
+        public struct {ident}<{generics}>
         {{
             polygen-inner
         }}"
@@ -19,7 +20,9 @@ pub fn render_struct(lib_name: impl AsRef<str>, s: &PolyStruct, i: Option<&PolyI
 
     // render out inner items
     let lib_name = lib_name.as_ref();
-    let mut inner = utils::render_each(s.fields.iter().enumerate(), "\n", render_struct_field);
+    let mut inner = utils::render_each(s.fields.iter().enumerate(), "\n", |f| {
+        render_struct_field(s.generics, f)
+    });
     if let Some(r#impl) = i {
         inner += &format!(
             "\n\n{}",
@@ -33,9 +36,13 @@ pub fn render_struct(lib_name: impl AsRef<str>, s: &PolyStruct, i: Option<&PolyI
     doc.replace("polygen-inner", &indent_by(4, inner))
 }
 
-fn render_struct_field((index, field): (usize, &PolyField)) -> String {
+fn render_struct_field(generics: &[&str], (index, field): (usize, &PolyField)) -> String {
     // create type and field name
-    let ty = convert_typename(Some(&field.ty));
+    let ty = if generics.contains(&field.ty_name) {
+        field.ty_name.to_string()
+    } else {
+        convert_typename(Some(&field.ty))
+    };
     let name = match field.name {
         "_" => format!("_polygen_field{index}"),
         name => name.into(),

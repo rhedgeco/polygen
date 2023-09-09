@@ -87,12 +87,15 @@ unsafe impl<T: 'static> ExportedPolyStruct for PolyBox<T> {
         fields: &[
             PolyField {
                 name: "id",
+                ty_name: stringify!(usize),
                 ty: &<u64 as ExportedPolyStruct>::STRUCT,
             },
             PolyField {
                 name: "item",
+                ty_name: stringify!(usize),
                 ty: &<usize as ExportedPolyStruct>::STRUCT,
             },
         ],
+        generics: &["T"],
     };
 }
