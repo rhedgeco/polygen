@@ -19,6 +19,7 @@ impl PolygenCSharp {
     pub fn generate(self) -> String {
         let namespace = self.namespace;
         let doc = formatdoc! {"
+            using System;
             using System.Runtime.InteropServices;
 
             namespace {namespace}

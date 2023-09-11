@@ -19,7 +19,7 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
     let export_ident = syn::Ident::new(&format!("__polygen_fn_{ident}_{rand_id}"), ident.span());
     let mut into_args = Punctuated::<proc_macro2::TokenStream, Token![,]>::new();
     let mut fn_args = Punctuated::<proc_macro2::TokenStream, Token![,]>::new();
-    let mut polyfields = Punctuated::<proc_macro2::TokenStream, Token![,]>::new();
+    let mut fn_inputs = Punctuated::<proc_macro2::TokenStream, Token![,]>::new();
     for input in &item.sig.inputs {
         use syn::FnArg as A;
         match input {
@@ -44,10 +44,9 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
                 fn_args.push(quote_spanned! { ty.span() =>
                     #pat_ident: <#ty as ::polygen::__private::ExportedPolyStruct>::ExportedType
                 });
-                polyfields.push(quote_spanned! { ty.span() =>
-                    ::polygen::items::PolyField {
+                fn_inputs.push(quote_spanned! { ty.span() =>
+                    ::polygen::items::FnInput {
                         name: stringify!(#pat_ident),
-                        ty_name: stringify!(#ty),
                         ty: &<#ty as ::polygen::__private::ExportedPolyStruct>::STRUCT,
                     }
                 });
@@ -78,7 +77,7 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
                 name: stringify!(#ident),
                 export_name: stringify!(#export_ident),
                 params: ::polygen::items::FnParams {
-                    inputs: &[#polyfields],
+                    inputs: &[#fn_inputs],
                     output: #polyout,
                 }
             };

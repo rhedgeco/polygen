@@ -1,47 +1,40 @@
+use std::collections::HashMap;
+
 use heck::ToPascalCase;
+use once_cell::sync::Lazy;
 use polygen::items::PolyStruct;
 
-use crate::utils;
+static TYPE_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+    HashMap::from([
+        ("u8", "byte"),
+        ("u16", "ushort"),
+        ("u32", "uint"),
+        ("u64", "ulong"),
+        ("usize", "nuint"),
+        ("i8", "sbyte"),
+        ("i16", "short"),
+        ("i32", "int"),
+        ("i64", "long"),
+        ("isize", "nint"),
+        ("bool", "bool"),
+        ("f32", "float"),
+        ("f64", "double"),
+    ])
+});
 
-pub fn convert_typename(s: Option<&PolyStruct>) -> String {
-    let Some(s) = s else { return format!("void") };
-    let mut module = String::new();
-    for mod_name in s.module.split("::").skip(1) {
-        let mod_name = mod_name.to_pascal_case();
-        module += &format!("{mod_name}.");
+pub fn render_typename(s: &PolyStruct) -> String {
+    // early return if the typename is built in
+    if let Some(ident) = TYPE_MAP.get(s.name) {
+        return ident.to_string();
     }
 
-    let ident = match s.name {
-        "u8" => "byte".into(),
-        "u16" => "ushort".into(),
-        "u32" => "uint".into(),
-        "u64" => "ulong".into(),
-        "usize" => "nuint".into(),
+    // get and format the modules and typename
+    let ident = s.name.to_pascal_case();
+    let mut module = "".to_string();
+    for m in s.module.split("::").skip(1) {
+        module += &format!("{}.", m.to_pascal_case());
+    }
 
-        "i8" => "sbyte".into(),
-        "i16" => "short".into(),
-        "i32" => "int".into(),
-        "i64" => "long".into(),
-        "isize" => "nint".into(),
-
-        "bool" => "bool".into(),
-        "f32" => "float".into(),
-        "f64" => "double".into(),
-
-        ident => {
-            let generics = if s.generics.is_empty() {
-                format!("")
-            } else {
-                let generics = utils::render_each(s.generics.iter(), ", ", |g| {
-                    let gen_field = s.fields.iter().find(|f| f.ty_name == *g).unwrap();
-                    convert_typename(Some(gen_field.ty))
-                });
-                format!("<{generics}>")
-            };
-
-            format!("{ident}{generics}")
-        }
-    };
-
-    module + &ident
+    // return the combined module and typename
+    format!("{module}{ident}")
 }

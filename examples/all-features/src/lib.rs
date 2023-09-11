@@ -1,18 +1,7 @@
-use polygen::{items::types::OpaquePtr, polygen};
-
-#[polygen]
-pub struct Nested<Wowzers> {
-    item: u32,
-    gen: Wowzers,
-}
-
-#[polygen]
-pub fn convert(nested: Nested<u64>, other: u32, _thing: TestStruct2) -> Nested<u32> {
-    Nested {
-        item: nested.item,
-        gen: other,
-    }
-}
+use polygen::{
+    items::types::{OpaquePtr, PolyPtr},
+    polygen,
+};
 
 #[polygen]
 pub struct TestStruct {
@@ -30,7 +19,10 @@ pub struct TestStruct3 {
 }
 
 #[polygen]
-pub fn test(_thing: OpaquePtr<TestStruct3>, _thing2: sub_module::TestStruct) -> TestStruct2 {
+pub fn test(
+    _thing: OpaquePtr<TestStruct3>,
+    _thing2: PolyPtr<sub_module::TestStruct>,
+) -> TestStruct2 {
     todo!()
 }
 

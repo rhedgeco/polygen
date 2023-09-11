@@ -1,9 +1,9 @@
 use heck::ToPascalCase;
 use indent::indent_by;
 use indoc::formatdoc;
-use polygen::items::{PolyField, PolyStruct};
+use polygen::items::{FieldType, PolyStruct, StructField};
 
-use crate::{generator::polytype::convert_typename, utils};
+use crate::{generator::polytype::render_typename, utils};
 
 pub fn render_struct(_lib_name: impl AsRef<str>, s: &PolyStruct) -> String {
     // crate struct template
@@ -11,10 +11,11 @@ pub fn render_struct(_lib_name: impl AsRef<str>, s: &PolyStruct) -> String {
     let generics = if s.generics.is_empty() {
         format!("")
     } else {
-        let generics = utils::render_each(s.generics.iter(), ", ", |g| g.to_string());
+        let generics = utils::render_each(s.generics.iter(), ", ", |g| g.ident.into());
         format!("<{generics}>")
     };
     let doc = formatdoc! {"
+        [StructLayout(LayoutKind.Sequential)]
         public struct {ident}{generics}
         {{
             polygen-inner
@@ -22,21 +23,18 @@ pub fn render_struct(_lib_name: impl AsRef<str>, s: &PolyStruct) -> String {
     };
 
     // render out inner items
-    let inner = utils::render_each(s.fields.iter().enumerate(), "\n", |f| {
-        render_struct_field(s.generics, f)
-    });
+    let inner = utils::render_each(s.fields.iter().enumerate(), "\n", render_struct_field);
 
     // replace
     doc.replace("polygen-inner", &indent_by(4, inner))
 }
 
-fn render_struct_field(generics: &[&str], (index, field): (usize, &PolyField)) -> String {
-    // create type and field name
-    let ty = if generics.contains(&field.ty_name) {
-        field.ty_name.to_string()
-    } else {
-        convert_typename(Some(&field.ty))
+fn render_struct_field((index, field): (usize, &StructField)) -> String {
+    let ty = match field.ty {
+        FieldType::Generic(g) => format!("{g}"),
+        FieldType::Typed(s) => render_typename(s),
     };
+
     let name = match field.name {
         "_" => format!("_polygen_field{index}"),
         name => name.into(),

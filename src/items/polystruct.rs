@@ -4,8 +4,8 @@ use std::hash::Hash;
 pub struct PolyStruct {
     pub module: &'static str,
     pub name: &'static str,
-    pub fields: &'static [PolyField],
-    pub generics: &'static [&'static str],
+    pub fields: &'static [StructField],
+    pub generics: &'static [PolyGeneric],
 }
 
 impl Eq for PolyStruct {}
@@ -23,8 +23,19 @@ impl Hash for PolyStruct {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct PolyField {
+pub struct StructField {
     pub name: &'static str,
-    pub ty_name: &'static str,
+    pub ty: FieldType,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FieldType {
+    Generic(&'static str),
+    Typed(&'static PolyStruct),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct PolyGeneric {
+    pub ident: &'static str,
     pub ty: &'static PolyStruct,
 }

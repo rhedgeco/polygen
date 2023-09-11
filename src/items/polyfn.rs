@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use super::{PolyField, PolyStruct};
+use super::PolyStruct;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PolyFn {
@@ -26,6 +26,12 @@ impl Hash for PolyFn {
 
 #[derive(Debug, Clone, Copy)]
 pub struct FnParams {
-    pub inputs: &'static [PolyField],
+    pub inputs: &'static [FnInput],
     pub output: Option<PolyStruct>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct FnInput {
+    pub name: &'static str,
+    pub ty: &'static PolyStruct,
 }

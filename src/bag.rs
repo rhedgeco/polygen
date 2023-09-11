@@ -2,7 +2,7 @@ use indexmap::{IndexMap, IndexSet};
 
 use crate::{
     __private::ExportedPolyFn,
-    items::{types::is_primitive, PolyFn, PolyStruct},
+    items::{types::is_primitive, FieldType, PolyFn, PolyStruct},
 };
 
 pub struct PolyBag {
@@ -51,7 +51,14 @@ impl PolyBag {
 
         // register all nested structs
         for field in s.fields {
-            self.register_struct(field.ty);
+            if let FieldType::Typed(s) = field.ty {
+                self.register_struct(s);
+            }
+        }
+
+        // register all generic types
+        for generic in s.generics {
+            self.register_struct(generic.ty);
         }
     }
 }
