@@ -26,7 +26,7 @@ pub fn polyfn(_attrs: &PolyAttr, item: &syn::ItemFn) -> proc_macro2::TokenStream
             A::Typed(typed) => {
                 let ty = &typed.ty;
                 let pat_ident = match &*typed.pat {
-                    syn::Pat::Ident(ident) => ident,
+                    syn::Pat::Ident(ident) => &ident.ident,
                     pat => {
                         let message = format!(
                             "This pattern is unsupported by #[polygen]. \
