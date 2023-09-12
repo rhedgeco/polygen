@@ -48,7 +48,7 @@ pub fn render_function(lib_name: impl AsRef<str>, f: &PolyFn) -> String {
                 inner_transfer = format!("{export_name}({params})");
                 export_out_type = out_type.clone();
             } else {
-                out_type = render_typename(s);
+                out_type = render_fn_type(Some(s));
                 inner_transfer = format!("new {out_type}({export_name}({params}))");
                 export_out_type = format!("{out_type}.Data");
             }
