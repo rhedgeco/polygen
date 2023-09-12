@@ -12,35 +12,35 @@ use crate::{
 pub struct InvalidPtr;
 
 #[repr(C)]
-pub struct OpaquePtr<T: 'static> {
+pub struct OpaquePtr {
     id: TypeId,
-    ptr: *mut T,
+    ptr: usize,
 }
 
-impl<T: 'static> OpaquePtr<T> {
-    pub fn new(item: T) -> Self {
+impl OpaquePtr {
+    pub fn new<T: 'static>(item: T) -> Self {
         Self {
             id: TypeId::of::<T>(),
-            ptr: Box::into_raw(Box::new(item)),
+            ptr: Box::into_raw(Box::new(item)) as usize,
         }
     }
 
-    pub fn as_ref(&self) -> Result<&T, InvalidPtr> {
-        self.validate_pointer()?;
-        Ok(unsafe { &*self.ptr })
+    pub fn as_ref<T: 'static>(&self) -> Result<&T, InvalidPtr> {
+        self.validate_pointer::<T>()?;
+        Ok(unsafe { &*(self.ptr as *const T) })
     }
 
-    pub fn as_mut(&mut self) -> Result<&mut T, InvalidPtr> {
-        self.validate_pointer()?;
-        Ok(unsafe { &mut *self.ptr })
+    pub fn as_mut<T: 'static>(&mut self) -> Result<&mut T, InvalidPtr> {
+        self.validate_pointer::<T>()?;
+        Ok(unsafe { &mut *(self.ptr as *mut T) })
     }
 
-    pub fn into_inner(self) -> Result<T, InvalidPtr> {
-        self.validate_pointer()?;
-        Ok(unsafe { *Box::from_raw(self.ptr) })
+    pub fn into_inner<T: 'static>(self) -> Result<T, InvalidPtr> {
+        self.validate_pointer::<T>()?;
+        Ok(unsafe { *Box::from_raw(self.ptr as *mut T) })
     }
 
-    fn validate_pointer(&self) -> Result<(), InvalidPtr> {
+    fn validate_pointer<T: 'static>(&self) -> Result<(), InvalidPtr> {
         if self.id != TypeId::of::<T>() {
             return Err(InvalidPtr);
         }
@@ -49,9 +49,8 @@ impl<T: 'static> OpaquePtr<T> {
     }
 }
 
-unsafe impl<T: 'static> ExportedPolyStruct for OpaquePtr<T> {
-    type ExportedType = OpaquePtr<T>;
-
+unsafe impl ExportedPolyStruct for OpaquePtr {
+    type ExportedType = OpaquePtr;
     const STRUCT: PolyStruct = PolyStruct {
         module: "::polygen",
         name: stringify!(OpaquePtr),

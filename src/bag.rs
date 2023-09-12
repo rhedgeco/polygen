@@ -25,12 +25,12 @@ impl PolyBag {
 
         // register all its inputs
         for input in func.params.inputs {
-            self.register_struct(input.ty);
+            self.insert_struct_data(input.ty);
         }
 
         // register its output
         if let Some(out) = &func.params.output {
-            self.register_struct(out);
+            self.insert_struct_data(out);
         }
 
         // insert the function
@@ -39,26 +39,28 @@ impl PolyBag {
         self
     }
 
-    fn register_struct(&mut self, s: &PolyStruct) {
+    fn insert_struct_data(&mut self, s: &PolyStruct) {
         // early return if it is a primitive
         if is_primitive(s.name) {
             return;
         }
 
-        // register this struct
-        let target_mod = self.module.get_target_mod(s.module);
-        target_mod.structs.insert(*s);
-
         // register all nested structs
         for field in s.fields {
             if let FieldType::Typed(s) = field.ty {
-                self.register_struct(s);
+                self.insert_struct_data(s);
             }
         }
 
         // register all generic types
         for generic in s.generics {
-            self.register_struct(generic.ty);
+            self.insert_struct_data(generic.ty);
+        }
+
+        // register current struct
+        let target_mod = self.module.get_target_mod(s.module);
+        if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*s) {
+            e.insert(None);
         }
     }
 }
@@ -68,7 +70,7 @@ pub struct PolyMod {
     name: String,
     functions: IndexSet<PolyFn>,
     modules: IndexMap<String, PolyMod>,
-    structs: IndexSet<PolyStruct>,
+    structs: IndexMap<PolyStruct, Option<()>>,
 }
 
 impl PolyMod {
@@ -85,8 +87,8 @@ impl PolyMod {
         &self.name
     }
 
-    pub fn structs(&self) -> impl Iterator<Item = &PolyStruct> {
-        self.structs.iter()
+    pub fn structs(&self) -> impl Iterator<Item = (&PolyStruct, Option<&()>)> {
+        self.structs.iter().map(|(s, i)| (s, i.as_ref()))
     }
 
     pub fn functions(&self) -> impl Iterator<Item = &PolyFn> {

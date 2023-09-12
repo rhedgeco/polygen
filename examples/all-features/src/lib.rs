@@ -1,7 +1,4 @@
-use polygen::{
-    items::types::{OpaquePtr, PolyPtr},
-    polygen,
-};
+use polygen::{items::types::OpaquePtr, polygen};
 
 #[polygen]
 pub struct TestStruct {
@@ -11,32 +8,20 @@ pub struct TestStruct {
 
 #[polygen]
 pub struct TestStruct2 {
-    _test: TestStruct,
-}
-
-pub struct TestStruct3 {
-    _test: u64,
+    item: TestStruct,
 }
 
 #[polygen]
-pub fn test(
-    _thing: OpaquePtr<TestStruct3>,
-    _thing2: PolyPtr<sub_module::TestStruct>,
-) -> TestStruct2 {
-    todo!()
+pub fn get_u32(item: TestStruct) -> u32 {
+    item.x0
 }
 
-pub mod sub_module {
-    use super::*;
+#[polygen]
+pub fn create_opaque(item: u32) -> OpaquePtr {
+    OpaquePtr::new(TestStruct { x0: item, x1: 42 })
+}
 
-    #[polygen]
-    pub struct TestStruct {
-        x0: u32,
-        x1: u64,
-    }
-
-    #[polygen]
-    pub fn test(_thing: TestStruct, thing2: TestStruct2) -> TestStruct2 {
-        thing2
-    }
+#[polygen]
+pub fn change_item(item: *mut TestStruct2, val: u64) {
+    unsafe { (*item).item.x1 = val }
 }

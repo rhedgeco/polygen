@@ -4,7 +4,7 @@ use heck::ToPascalCase;
 use once_cell::sync::Lazy;
 use polygen::items::PolyStruct;
 
-static TYPE_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+pub static TYPE_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     HashMap::from([
         ("u8", "byte"),
         ("u16", "ushort"),
