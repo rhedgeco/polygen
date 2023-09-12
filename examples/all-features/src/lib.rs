@@ -1,4 +1,7 @@
-use polygen::{items::types::OpaquePtr, polygen};
+use polygen::{
+    items::types::{OpaquePtr, PolyPtr},
+    polygen,
+};
 
 #[polygen]
 pub struct TestStruct {
@@ -22,6 +25,6 @@ pub fn create_opaque(item: u32) -> OpaquePtr {
 }
 
 #[polygen]
-pub fn change_item(item: *mut TestStruct2, val: u64) {
-    unsafe { (*item).item.x1 = val }
+pub fn change_item(mut item: PolyPtr<TestStruct2>, val: u64) {
+    item.item.x1 = val
 }
