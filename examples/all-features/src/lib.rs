@@ -37,7 +37,7 @@ pub fn change_item(mut item: PolyPtr<TestStruct2>, val: u64) {
     item.item.x1 = val
 }
 
-mod sub_module {
+pub mod sub_module {
     use polygen::polygen;
 
     use crate::TestStruct;
@@ -45,5 +45,10 @@ mod sub_module {
     #[polygen]
     pub struct TestStruct2 {
         pub(crate) item: TestStruct,
+    }
+
+    #[polygen]
+    pub fn sub_module_function(item: TestStruct) -> u32 {
+        item.x0
     }
 }
