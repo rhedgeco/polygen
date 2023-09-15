@@ -15,8 +15,8 @@ pub struct PolyTera {
 }
 
 impl PolyTera {
-    pub fn new(input_glob: String) -> Result<Self> {
-        let mut tera = Tera::new(&input_glob)?;
+    pub fn new(input_glob: impl AsRef<str>) -> Result<Self> {
+        let mut tera = Tera::new(input_glob.as_ref())?;
         tera.register_filter("to_pascal_case", filters::to_pascal_case);
         tera.register_filter("to_camel_case", filters::to_camel_case);
         tera.register_filter("to_snake_case", filters::to_snake_case);

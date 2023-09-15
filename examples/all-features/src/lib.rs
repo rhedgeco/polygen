@@ -2,12 +2,16 @@ use polygen::{
     items::types::{OpaquePtr, PolyPtr},
     polygen,
 };
-use sub_module::TestStruct2;
 
 #[polygen]
 pub struct TestStruct {
     x0: u32,
     x1: u64,
+}
+
+#[polygen]
+pub struct TestStruct2 {
+    nested: sub_module::TestStruct2,
 }
 
 #[polygen]
@@ -26,14 +30,14 @@ pub fn create_opaque(item: u32) -> OpaquePtr {
 }
 
 #[polygen]
-pub fn create_ptr(val: u64) -> PolyPtr<TestStruct2> {
-    PolyPtr::new(TestStruct2 {
+pub fn create_ptr(val: u64) -> PolyPtr<sub_module::TestStruct2> {
+    PolyPtr::new(sub_module::TestStruct2 {
         item: TestStruct { x0: 42, x1: val },
     })
 }
 
 #[polygen]
-pub fn change_item(mut item: PolyPtr<TestStruct2>, val: u64) {
+pub fn change_item(mut item: PolyPtr<sub_module::TestStruct2>, val: u64) {
     item.item.x1 = val
 }
 

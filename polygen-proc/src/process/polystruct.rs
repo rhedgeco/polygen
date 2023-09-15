@@ -97,12 +97,12 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
         unsafe impl ::polygen::__private::ExportedPolyStruct for #ident {
             type ExportedType = #export_ident;
 
-            const STRUCT: ::polygen::items::PolyStruct = ::polygen::items::PolyStruct {
+            const STRUCT: ::polygen::items::PolyType = ::polygen::items::PolyType::Struct(::polygen::items::PolyStruct {
                 module: module_path!(),
                 name: stringify!(#ident),
                 fields: &[#poly_fields],
                 generics: &[], // only manually implemented generics are currently supported
-            };
+            });
         }
     });
 

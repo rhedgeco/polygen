@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     __private::ExportedPolyStruct,
-    items::{PolyGeneric, PolyStruct, StructField},
+    items::{PolyGeneric, PolyStruct, PolyType, StructField},
 };
 
 #[repr(C)]
@@ -34,7 +34,7 @@ impl<T: ExportedPolyStruct> DerefMut for PolyPtr<T> {
 
 unsafe impl<T: ExportedPolyStruct> ExportedPolyStruct for PolyPtr<T> {
     type ExportedType = PolyPtr<T>;
-    const STRUCT: PolyStruct = PolyStruct {
+    const STRUCT: PolyType = PolyType::Struct(PolyStruct {
         module: "::polygen",
         name: stringify!(PolyPtr),
         fields: &[StructField {
@@ -45,5 +45,5 @@ unsafe impl<T: ExportedPolyStruct> ExportedPolyStruct for PolyPtr<T> {
             ident: "T",
             ty: &<T as ExportedPolyStruct>::STRUCT,
         }],
-    };
+    });
 }

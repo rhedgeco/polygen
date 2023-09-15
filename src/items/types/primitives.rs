@@ -4,13 +4,9 @@ macro_rules! impl_item {
         $(
             unsafe impl $crate::__private::ExportedPolyStruct for $item {
                 type ExportedType = $item;
-
-                const STRUCT: $crate::items::PolyStruct = $crate::items::PolyStruct {
-                    module: "std",
-                    name: stringify!($item),
-                    fields: &[],
-                    generics: &[],
-                };
+                const STRUCT: $crate::items::PolyType = $crate::items::PolyType::Primitive(
+                    stringify!($item)
+                );
             }
         )+
     };
@@ -22,12 +18,4 @@ impl_item! {
     i8, i16, i32, i64, isize,
     f32, f64,
     bool,
-}
-
-pub fn is_primitive(s: impl AsRef<str>) -> bool {
-    match s.as_ref() {
-        "u8" | "u16" | "u32" | "u64" | "usize" | "i8" | "i16" | "i32" | "i64" | "isize" | "f32"
-        | "f64" | "bool" => true,
-        _ => false,
-    }
 }

@@ -1,11 +1,21 @@
 use std::hash::Hash;
 
-#[derive(Debug, Clone, Copy)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct PolyStruct {
     pub module: &'static str,
     pub name: &'static str,
     pub fields: &'static [StructField],
     pub generics: &'static [PolyGeneric],
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+pub enum PolyType {
+    #[serde(rename = "primitive")]
+    Primitive(&'static str),
+    #[serde(rename = "struct")]
+    Struct(PolyStruct),
 }
 
 impl Eq for PolyStruct {}
@@ -22,20 +32,22 @@ impl Hash for PolyStruct {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct StructField {
     pub name: &'static str,
     pub ty: FieldType,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub enum FieldType {
+    #[serde(rename = "generic")]
     Generic(&'static str),
-    Typed(&'static PolyStruct),
+    #[serde(rename = "typed")]
+    Typed(&'static PolyType),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct PolyGeneric {
     pub ident: &'static str,
-    pub ty: &'static PolyStruct,
+    pub ty: &'static PolyType,
 }

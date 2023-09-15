@@ -1,8 +1,10 @@
 use std::hash::Hash;
 
-use super::PolyStruct;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Copy)]
+use super::PolyType;
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct PolyFn {
     pub module: &'static str,
     pub name: &'static str,
@@ -24,14 +26,14 @@ impl Hash for PolyFn {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct FnParams {
     pub inputs: &'static [FnInput],
-    pub output: Option<PolyStruct>,
+    pub output: Option<PolyType>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct FnInput {
     pub name: &'static str,
-    pub ty: &'static PolyStruct,
+    pub ty: &'static PolyType,
 }

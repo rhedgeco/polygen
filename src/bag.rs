@@ -1,22 +1,25 @@
 use indexmap::{IndexMap, IndexSet};
+use serde::Serialize;
 
 use crate::{
     __private::ExportedPolyFn,
-    items::{types::is_primitive, FieldType, PolyFn, PolyStruct},
+    items::{FieldType, PolyFn, PolyStruct, PolyType},
 };
 
+#[derive(Debug, Serialize)]
 pub struct PolyBag {
-    module: PolyMod,
+    #[serde(flatten)]
+    root_module: PolyMod,
 }
 
 impl PolyBag {
     pub fn new(name: impl Into<String>) -> Self {
-        let module = PolyMod::build(name);
-        Self { module }
+        let root_module = PolyMod::build(name);
+        Self { root_module }
     }
 
     pub fn root_module(&self) -> &PolyMod {
-        &self.module
+        &self.root_module
     }
 
     pub fn register_function<T: ExportedPolyFn>(mut self) -> Self {
@@ -25,52 +28,51 @@ impl PolyBag {
 
         // register all its inputs
         for input in func.params.inputs {
-            self.insert_struct_data(input.ty);
+            if let PolyType::Struct(s) = input.ty {
+                self.insert_struct_data(s);
+            }
         }
 
         // register its output
         if let Some(out) = &func.params.output {
-            self.insert_struct_data(out);
+            if let PolyType::Struct(s) = out {
+                self.insert_struct_data(s);
+            }
         }
 
         // insert the function
-        let target_mod = self.module.get_target_mod(func.module);
+        let target_mod = self.root_module.get_target_mod(func.module);
         target_mod.functions.insert(*func);
         self
     }
 
     fn insert_struct_data(&mut self, s: &PolyStruct) {
-        // early return if it is a primitive
-        if is_primitive(s.name) {
-            return;
-        }
-
         // register all nested structs
         for field in s.fields {
-            if let FieldType::Typed(s) = field.ty {
+            if let FieldType::Typed(PolyType::Struct(s)) = field.ty {
                 self.insert_struct_data(s);
             }
         }
 
         // register all generic types
         for generic in s.generics {
-            self.insert_struct_data(generic.ty);
+            if let PolyType::Struct(s) = generic.ty {
+                self.insert_struct_data(s);
+            }
         }
 
         // register current struct
-        let target_mod = self.module.get_target_mod(s.module);
-        if let indexmap::map::Entry::Vacant(e) = target_mod.structs.entry(*s) {
-            e.insert(None);
-        }
+        let target_mod = self.root_module.get_target_mod(s.module);
+        target_mod.structs.insert(*s);
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct PolyMod {
     name: String,
     functions: IndexSet<PolyFn>,
     modules: IndexMap<String, PolyMod>,
-    structs: IndexMap<PolyStruct, Option<()>>,
+    structs: IndexSet<PolyStruct>,
 }
 
 impl PolyMod {
@@ -87,8 +89,8 @@ impl PolyMod {
         &self.name
     }
 
-    pub fn structs(&self) -> impl Iterator<Item = (&PolyStruct, Option<&()>)> {
-        self.structs.iter().map(|(s, i)| (s, i.as_ref()))
+    pub fn structs(&self) -> impl Iterator<Item = &PolyStruct> {
+        self.structs.iter()
     }
 
     pub fn functions(&self) -> impl Iterator<Item = &PolyFn> {

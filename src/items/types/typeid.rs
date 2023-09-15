@@ -2,7 +2,7 @@ use std::any::TypeId;
 
 use crate::{
     __private::ExportedPolyStruct,
-    items::{FieldType, PolyStruct, StructField},
+    items::{FieldType, PolyStruct, PolyType, StructField},
 };
 
 // assert that TypeId is 64 bits
@@ -15,7 +15,7 @@ const _: fn(TypeId) = |id| unsafe {
 unsafe impl ExportedPolyStruct for TypeId {
     type ExportedType = TypeId;
 
-    const STRUCT: PolyStruct = PolyStruct {
+    const STRUCT: PolyType = PolyType::Struct(PolyStruct {
         module: "::polygen",
         name: stringify!(TypeId),
         fields: &[StructField {
@@ -23,5 +23,5 @@ unsafe impl ExportedPolyStruct for TypeId {
             ty: FieldType::Typed(&<u64 as ExportedPolyStruct>::STRUCT),
         }],
         generics: &[],
-    };
+    });
 }

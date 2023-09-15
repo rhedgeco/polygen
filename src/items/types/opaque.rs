@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::{
     __private::ExportedPolyStruct,
-    items::{FieldType, PolyStruct, StructField},
+    items::{FieldType, PolyStruct, PolyType, StructField},
 };
 
 #[derive(Debug, Error)]
@@ -51,7 +51,7 @@ impl OpaquePtr {
 
 unsafe impl ExportedPolyStruct for OpaquePtr {
     type ExportedType = OpaquePtr;
-    const STRUCT: PolyStruct = PolyStruct {
+    const STRUCT: PolyType = PolyType::Struct(PolyStruct {
         module: "::polygen",
         name: stringify!(OpaquePtr),
         fields: &[
@@ -65,5 +65,5 @@ unsafe impl ExportedPolyStruct for OpaquePtr {
             },
         ],
         generics: &[],
-    };
+    });
 }

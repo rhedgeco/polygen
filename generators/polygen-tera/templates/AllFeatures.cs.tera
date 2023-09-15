@@ -1,0 +1,22 @@
+{%- import "csharp.cs.macros" as macros -%}
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace AllFeatures
+{
+    public static class Native
+    {
+    {%- for struct in structs %}
+        {{ macros::render_struct(struct=struct) | indent(prefix="        ") }}
+    {% endfor %}
+    
+    {%- for func in functions %}
+        {{ macros::render_func(func=func) | indent(prefix="        ") }}
+    {% endfor -%}
+
+    {%- for _, module in modules %}
+        {{ macros::render_module(module=module) | indent(prefix="        ") }}
+    {% endfor -%}
+    }
+}
