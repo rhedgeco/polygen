@@ -6,19 +6,17 @@ use crate::{
 };
 
 #[repr(C)]
-pub struct PolyPtr<T: ExportedPolyStruct> {
+pub struct PolyBox<T: ExportedPolyStruct> {
     ptr: *mut T,
 }
 
-impl<T: ExportedPolyStruct> PolyPtr<T> {
+impl<T: ExportedPolyStruct> PolyBox<T> {
     pub fn new(item: T) -> Self {
-        Self {
-            ptr: Box::into_raw(Box::new(item)),
-        }
+        Box::new(item).into()
     }
 }
 
-impl<T: ExportedPolyStruct> Deref for PolyPtr<T> {
+impl<T: ExportedPolyStruct> Deref for PolyBox<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -26,17 +24,25 @@ impl<T: ExportedPolyStruct> Deref for PolyPtr<T> {
     }
 }
 
-impl<T: ExportedPolyStruct> DerefMut for PolyPtr<T> {
+impl<T: ExportedPolyStruct> DerefMut for PolyBox<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *self.ptr }
     }
 }
 
-unsafe impl<T: ExportedPolyStruct> ExportedPolyStruct for PolyPtr<T> {
-    type ExportedType = PolyPtr<T>;
+impl<T: ExportedPolyStruct> From<Box<T>> for PolyBox<T> {
+    fn from(value: Box<T>) -> Self {
+        Self {
+            ptr: Box::into_raw(value),
+        }
+    }
+}
+
+unsafe impl<T: ExportedPolyStruct> ExportedPolyStruct for PolyBox<T> {
+    type ExportedType = PolyBox<T>;
     const STRUCT: PolyType = PolyType::Struct(PolyStruct {
         module: "::polygen",
-        name: stringify!(PolyPtr),
+        name: "PolyBox",
         fields: &[StructField {
             name: "ptr",
             ty: crate::items::FieldType::Typed(&<usize as ExportedPolyStruct>::STRUCT),

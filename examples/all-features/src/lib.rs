@@ -1,5 +1,5 @@
 use polygen::{
-    items::types::{OpaquePtr, PolyPtr},
+    items::types::{OpaquePtr, PolyBox},
     polygen,
 };
 
@@ -30,14 +30,14 @@ pub fn create_opaque(item: u32) -> OpaquePtr {
 }
 
 #[polygen]
-pub fn create_ptr(val: u64) -> PolyPtr<sub_module::TestStruct2> {
-    PolyPtr::new(sub_module::TestStruct2 {
+pub fn create_ptr(val: u64) -> PolyBox<sub_module::TestStruct2> {
+    PolyBox::new(sub_module::TestStruct2 {
         item: TestStruct { x0: 42, x1: val },
     })
 }
 
 #[polygen]
-pub fn change_item(mut item: PolyPtr<sub_module::TestStruct2>, val: u64) {
+pub fn change_item(mut item: PolyBox<sub_module::TestStruct2>, val: u64) {
     item.item.x1 = val
 }
 
