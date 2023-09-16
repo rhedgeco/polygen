@@ -7,6 +7,16 @@ pub struct MyStruct {
 }
 
 #[polygen]
+impl MyStruct {
+    pub fn new_with(item: u32) -> Self {
+        Self {
+            item,
+            another_item: 42,
+        }
+    }
+}
+
+#[polygen]
 pub fn set_item(mut boxed: PolyBox<MyStruct>, item: u32) {
     boxed.item = item;
 }

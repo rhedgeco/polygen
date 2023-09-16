@@ -14,13 +14,23 @@ pub struct MyStruct {
 }
 
 #[polygen]
+impl MyStruct {
+    pub fn new_with(item: u32) -> Self {
+        Self {
+            item,
+            another_item: 42,
+        }
+    }
+}
+
+#[polygen]
 pub fn set_item(mut boxed: PolyBox<MyStruct>, item: u32) {
     boxed.item = item;
 }
 ```
 
 2. Then create a test that registers the items and generates the binding file:
-    > 💡 notice that the only thing registered is the `set_item` function. This is because generation is handled in a smart way where only what gets used ends up in the binding file. So since `set_item` uses `MyStruct` and `PolyBox`, they will also be included in the final output.
+    > 💡 notice that the only thing registered is the `set_item` function and `MyStruct` impl. This is because generation is handled in a smart way where only what gets used ends up in the binding file. So since `set_item` uses `MyStruct` and `PolyBox`, they will also be included in the final output.
 
 ```rust
 static OUTPUT_DIR: &str = "target/polygen";
@@ -34,7 +44,9 @@ fn bind() {
     }
 
     // create the PolyBag
-    let bag = PolyBag::new("Native").register_function::<set_item>();
+    let bag = PolyBag::new("Native")
+        .register_impl::<MyStruct>()
+        .register_function::<set_item>();
 
     // render the csharp data to a file
     fs::create_dir_all(OUTPUT_DIR).unwrap();
@@ -76,11 +88,15 @@ namespace SimpleLib
                 internal uint item;
                 internal ulong anotherItem;
             }
+
+            [DllImport("simple_lib", CallingConvention = CallingConvention.Cdecl)]
+            private static extern MyStruct.Data __polygen_implfn_new_with_LDl95s(uint item);
+            private MyStruct NewWith(uint item) => new MyStruct(__polygen_implfn_new_with_LDl95s(item))
         }
 
         [DllImport("simple_lib", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void __polygen_fn_set_item_w4wA2Y(Polygen.PolyBox<MyStruct>.Data boxed, uint item);
-        public static void SetItem(Polygen.PolyBox<MyStruct> boxed, uint item) => __polygen_fn_set_item_w4wA2Y(boxed._data, item)
+        private static extern void __polygen_fn_set_item_Y4Bsfl(Polygen.PolyBox<MyStruct>.Data boxed, uint item);
+        public static void SetItem(Polygen.PolyBox<MyStruct> boxed, uint item) => __polygen_fn_set_item_Y4Bsfl(boxed._data, item)
 
         public static class Polygen
         {
