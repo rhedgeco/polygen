@@ -97,7 +97,7 @@ namespace SimpleLib
 
             [DllImport("simple_lib", CallingConvention = CallingConvention.Cdecl)]
             private static extern MyStruct.Data __polygen_implfn_new_with_h0ZSAp(uint item);
-            private MyStruct NewWith(uint item) => new MyStruct(__polygen_implfn_new_with_h0ZSAp(item))
+            private static MyStruct NewWith(uint item) => new MyStruct(__polygen_implfn_new_with_h0ZSAp(item))
         }
 
         [DllImport("simple_lib", CallingConvention = CallingConvention.Cdecl)]

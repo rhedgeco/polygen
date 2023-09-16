@@ -159,8 +159,8 @@ impl CSharpRenderer {
         let out_data = render_typename_data(f.params.output.as_ref());
         let self_input = f.params.inputs.iter().find(|i| i.name == "self");
         let static_keyword = match self_input.is_some() {
-            true => " static",
-            false => "",
+            false => " static",
+            true => "",
         };
 
         let export_params = utils::join(f.params.inputs.iter(), ", ", |i| {
