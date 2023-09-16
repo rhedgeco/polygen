@@ -212,7 +212,7 @@ impl CSharpRenderer {
         formatdoc! {"
             [DllImport(\"{lib_name}\", CallingConvention = CallingConvention.Cdecl)]
             private static extern {out_data} {export_name}({export_params});
-            private{static_keyword} {out_type} {name}({func_params}) {conversion}"
+            public{static_keyword} {out_type} {name}({func_params}) {conversion}"
         }
     }
 }
