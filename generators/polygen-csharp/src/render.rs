@@ -57,7 +57,7 @@ impl CSharpRenderer {
             public class {name}
             {{
                 internal Data _data;
-                public readonly ref Data data = ref _data;
+                public Data data => _data;
 
                 internal {name}(Data newData)
                 {{
@@ -105,7 +105,7 @@ impl CSharpRenderer {
         formatdoc! {"
             [DllImport(\"{lib_name}\", CallingConvention = CallingConvention.Cdecl)]
             private static extern {out_data} {export_name}({export_params});
-            public static {out_type} {name}({func_params}) => {convert_call}"
+            public static {out_type} {name}({func_params}) => {convert_call};"
         }
     }
 
@@ -206,7 +206,7 @@ impl CSharpRenderer {
                     }}"
                 }
             }
-            _ => format!("=> {convert_call}"),
+            _ => format!("=> {convert_call};"),
         };
 
         formatdoc! {"
