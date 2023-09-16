@@ -102,3 +102,5 @@ namespace SimpleLib
     }
 }
 ```
+
+### [MIT License](LICENSE.md)
