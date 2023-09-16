@@ -1,9 +1,11 @@
 [package]
-name = "polygen-tera"
+name = "polygen-csharp"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tera = "1.0"
 heck = "0.4"
+indoc = "2.0"
+indent = "0.1"
+once_cell = "1.18"
 polygen = { path = "../../" }

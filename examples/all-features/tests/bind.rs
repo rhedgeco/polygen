@@ -4,9 +4,8 @@ use all_features::{
     change_item, create_opaque, create_ptr, execute, get_u32, pointer_test, sub_module, TestStruct,
 };
 use polygen::PolyBag;
-use polygen_tera::PolyTera;
+use polygen_csharp::CSharpRenderer;
 
-static INPUT_GLOB: &str = "templates/**/*";
 static OUTPUT_DIR: &str = "target/polygen";
 
 #[test]
@@ -28,9 +27,16 @@ fn bind() {
         .register_function::<change_item>()
         .register_function::<sub_module::sub_module_function>();
 
-    // render the bag with PolyTera
-    PolyTera::new(INPUT_GLOB)
-        .unwrap()
-        .render(OUTPUT_DIR, bag)
-        .unwrap();
+    // render the csharp data to a file
+    fs::create_dir_all(OUTPUT_DIR).unwrap();
+    fs::write(
+        PathBuf::from(OUTPUT_DIR).join("AllFeatures.cs"),
+        CSharpRenderer {
+            lib_name: "all_features".to_string(),
+            namespace: "AllFeatures".to_string(),
+            class_name: "Native".to_string(),
+        }
+        .render(&bag),
+    )
+    .unwrap();
 }

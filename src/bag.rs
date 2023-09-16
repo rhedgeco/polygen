@@ -87,19 +87,15 @@ impl PolyBag {
 
         // register current struct
         let target_mod = self.root_module.get_target_mod(s.module);
-        let struct_key = format!("{}::{}", s.module, s.name);
         use indexmap::map::Entry as E;
-        match target_mod.structs.entry(struct_key) {
-            E::Occupied(e) => {
+        match target_mod.structs.entry(*s) {
+            E::Occupied(mut e) => {
                 if let Some(i) = i {
-                    e.into_mut().r#impl = Some(i);
+                    e.insert(Some(i));
                 }
             }
             E::Vacant(e) => {
-                e.insert(StructHolder {
-                    data: *s,
-                    r#impl: i,
-                });
+                e.insert(i);
             }
         }
     }
@@ -110,7 +106,7 @@ pub struct PolyMod {
     name: String,
     functions: IndexSet<PolyFn>,
     modules: IndexMap<String, PolyMod>,
-    structs: IndexMap<String, StructHolder>,
+    structs: IndexMap<PolyStruct, Option<PolyImpl>>,
 }
 
 impl PolyMod {
@@ -127,8 +123,8 @@ impl PolyMod {
         &self.name
     }
 
-    pub fn structs(&self) -> impl Iterator<Item = &StructHolder> {
-        self.structs.values()
+    pub fn structs(&self) -> impl Iterator<Item = (&PolyStruct, Option<&PolyImpl>)> {
+        self.structs.iter().map(|(s, i)| (s, i.as_ref()))
     }
 
     pub fn functions(&self) -> impl Iterator<Item = &PolyFn> {
@@ -151,11 +147,4 @@ impl PolyMod {
 
         target_mod
     }
-}
-
-#[derive(Debug, Clone, Copy, Serialize)]
-pub struct StructHolder {
-    pub data: PolyStruct,
-    #[serde(rename = "impl")]
-    pub r#impl: Option<PolyImpl>,
 }

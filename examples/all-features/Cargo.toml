@@ -10,4 +10,4 @@ crate-type = ["rlib", "cdylib"]
 polygen = { path = "../../" }
 
 [dev-dependencies]
-polygen-tera = { path = "../../generators/polygen-tera" }
+polygen-csharp = { path = "../../generators/polygen-csharp" }

@@ -31,6 +31,13 @@ impl TestStruct {
         self.x1 = val.into();
     }
 
+    pub fn duplicate(&self) -> Self {
+        Self {
+            x0: self.x0,
+            x1: self.x1,
+        }
+    }
+
     pub fn convert(mut self, val: u32) -> Self {
         self.x0 = val;
         self.x1 = val.into();
