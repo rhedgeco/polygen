@@ -17,6 +17,11 @@ impl MyStruct {
 }
 
 #[polygen]
+pub fn create_boxed(item: MyStruct) -> PolyBox<MyStruct> {
+    PolyBox::new(item)
+}
+
+#[polygen]
 pub fn set_item(mut boxed: PolyBox<MyStruct>, item: u32) {
     boxed.item = item;
 }

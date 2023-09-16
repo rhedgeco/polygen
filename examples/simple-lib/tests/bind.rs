@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use polygen::PolyBag;
 use polygen_csharp::CSharpRenderer;
-use simple_lib::{set_item, MyStruct};
+use simple_lib::{create_boxed, set_item, MyStruct};
 
 static OUTPUT_DIR: &str = "target/polygen";
 
@@ -17,6 +17,7 @@ fn bind() {
     // create the PolyBag
     let bag = PolyBag::new("Native")
         .register_impl::<MyStruct>()
+        .register_function::<create_boxed>()
         .register_function::<set_item>();
 
     // render the csharp data to a file
