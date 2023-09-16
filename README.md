@@ -77,7 +77,7 @@ namespace SimpleLib
             }
         }
 
-        [DllImport(simple_lib, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("simple_lib", CallingConvention = CallingConvention.Cdecl)]
         private static extern void __polygen_fn_set_item_w4wA2Y(Polygen.PolyBox<MyStruct>.Data boxed, uint item);
         public static void SetItem(Polygen.PolyBox<MyStruct> boxed, uint item) => __polygen_fn_set_item_w4wA2Y(boxed._data, item)
 
