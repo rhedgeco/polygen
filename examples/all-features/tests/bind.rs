@@ -1,6 +1,8 @@
 use std::{fs, path::PathBuf};
 
-use all_features::{change_item, create_opaque, create_ptr, execute, get_u32, sub_module};
+use all_features::{
+    change_item, create_opaque, create_ptr, execute, get_u32, pointer_test, sub_module, TestStruct,
+};
 use polygen::PolyBag;
 use polygen_tera::PolyTera;
 
@@ -17,6 +19,8 @@ fn bind() {
 
     // create the PolyBag
     let bag = PolyBag::new("Native")
+        .register_impl::<TestStruct>()
+        .register_function::<pointer_test>()
         .register_function::<execute>()
         .register_function::<get_u32>()
         .register_function::<create_opaque>()

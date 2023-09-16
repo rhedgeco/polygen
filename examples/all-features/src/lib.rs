@@ -10,8 +10,42 @@ pub struct TestStruct {
 }
 
 #[polygen]
+impl TestStruct {
+    pub fn new() -> Self {
+        Self { x0: 42, x1: 42 }
+    }
+
+    pub fn new_with(val: u32) -> Self {
+        Self {
+            x0: val,
+            x1: val.into(),
+        }
+    }
+
+    pub fn read(&self) -> u32 {
+        self.x0
+    }
+
+    pub fn modify(&mut self, val: u32) {
+        self.x0 = val;
+        self.x1 = val.into();
+    }
+
+    pub fn convert(mut self, val: u32) -> Self {
+        self.x0 = val;
+        self.x1 = val.into();
+        self
+    }
+}
+
+#[polygen]
 pub struct TestStruct2 {
     nested: sub_module::TestStruct2,
+}
+
+#[polygen]
+pub fn pointer_test(_input: *mut TestStruct) -> *mut *const TestStruct2 {
+    todo!()
 }
 
 #[polygen]

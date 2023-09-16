@@ -16,6 +16,8 @@ pub enum PolyType {
     Primitive(&'static str),
     #[serde(rename = "struct")]
     Struct(PolyStruct),
+    #[serde(rename = "pointer")]
+    Pointer(&'static PolyType),
 }
 
 impl Eq for PolyStruct {}
