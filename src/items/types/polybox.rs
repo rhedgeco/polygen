@@ -44,6 +44,7 @@ unsafe impl<T: ExportedPolyStruct> ExportedPolyStruct for PolyBox<T> {
         module: "::polygen",
         name: "PolyBox",
         fields: &[StructField {
+            visible: false,
             name: "ptr",
             ty: crate::items::FieldType::Typed(&<usize as ExportedPolyStruct>::STRUCT),
         }],

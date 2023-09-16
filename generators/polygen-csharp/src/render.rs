@@ -98,14 +98,16 @@ impl CSharpRenderer {
         });
 
         let convert_call = match f.params.output {
-            Some(PolyType::Struct(_)) => format!("new {out_type}({export_name}({convert_params}))"),
+            Some(PolyType::Struct(_)) => {
+                format!("new {out_type}({export_name}({convert_params}))")
+            }
             _ => format!("{export_name}({convert_params})"),
         };
 
         formatdoc! {"
             [DllImport(\"{lib_name}\", CallingConvention = CallingConvention.Cdecl)]
-            private static extern {out_data} {export_name}({export_params});
-            public static {out_type} {name}({func_params}) => {convert_call};"
+            private static unsafe extern {out_data} {export_name}({export_params});
+            public static {out_type} {name}({func_params}) => unsafe {{ {convert_call} }};"
         }
     }
 
@@ -147,8 +149,12 @@ impl CSharpRenderer {
             FieldType::Generic(g) => g.to_string(),
             FieldType::Typed(t) => render_typename(Some(t)),
         };
+        let vis = match f.visible {
+            false => "internal",
+            true => "public",
+        };
 
-        format!("internal {ty} {name};")
+        format!("{vis} {ty} {name};")
     }
 
     fn render_struct_function(&self, f: &ImplFn) -> String {
@@ -186,22 +192,26 @@ impl CSharpRenderer {
         });
 
         let convert_call = match f.params.output {
-            Some(PolyType::Struct(_)) => format!("new {out_type}({export_name}({convert_params}))"),
+            Some(PolyType::Struct(_)) => {
+                format!("new {out_type}({export_name}({convert_params}))")
+            }
             _ => format!("{export_name}({convert_params})"),
         };
 
         let conversion = match self_input {
             Some(FnInput {
                 name: _,
-                ty: ty @ PolyType::Pointer(_),
+                ty: PolyType::Pointer(_),
             }) => {
-                let ty = render_typename_data(Some(ty));
                 formatdoc! {"
                     
                     {{
-                        fixed ({ty} __polygen_self_ptr = &this._data)
+                        unsafe
                         {{
-                            return {convert_call};
+                            fixed (Data* __polygen_self_ptr = &_data)
+                            {{
+                                return {convert_call};
+                            }}
                         }}
                     }}"
                 }
@@ -211,7 +221,7 @@ impl CSharpRenderer {
 
         formatdoc! {"
             [DllImport(\"{lib_name}\", CallingConvention = CallingConvention.Cdecl)]
-            private static extern {out_data} {export_name}({export_params});
+            private static unsafe extern {out_data} {export_name}({export_params});
             public{static_keyword} {out_type} {name}({func_params}) {conversion}"
         }
     }

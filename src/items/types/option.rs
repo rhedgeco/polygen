@@ -33,6 +33,7 @@ unsafe impl<T: ExportedPolyStruct> ExportedPolyStruct for PolyOption<T> {
         module: "::polygen",
         name: "PolyOption",
         fields: &[StructField {
+            visible: false,
             name: "valid",
             ty: FieldType::Generic("T"),
         }],

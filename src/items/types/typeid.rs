@@ -19,6 +19,7 @@ unsafe impl ExportedPolyStruct for TypeId {
         module: "::polygen",
         name: stringify!(TypeId),
         fields: &[StructField {
+            visible: false,
             name: "id",
             ty: FieldType::Typed(&<u64 as ExportedPolyStruct>::STRUCT),
         }],

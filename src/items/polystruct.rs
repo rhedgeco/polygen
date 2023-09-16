@@ -36,6 +36,7 @@ impl Hash for PolyStruct {
 
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct StructField {
+    pub visible: bool,
     pub name: &'static str,
     pub ty: FieldType,
 }

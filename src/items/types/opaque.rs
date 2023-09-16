@@ -56,10 +56,12 @@ unsafe impl ExportedPolyStruct for OpaquePtr {
         name: stringify!(OpaquePtr),
         fields: &[
             StructField {
+                visible: false,
                 name: "id",
                 ty: FieldType::Typed(&<TypeId as ExportedPolyStruct>::STRUCT),
             },
             StructField {
+                visible: false,
                 name: "ptr",
                 ty: FieldType::Typed(&<usize as ExportedPolyStruct>::STRUCT),
             },

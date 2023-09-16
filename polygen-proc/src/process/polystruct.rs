@@ -50,6 +50,10 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
             let mut from_fields = quote!();
             let mut into_fields = quote!();
             for field in f.named.iter() {
+                let field_vis = match field.vis {
+                    syn::Visibility::Public(_) => true,
+                    _ => false,
+                };
                 let field_type = &field.ty;
                 let export_type = make_exp(field_type);
                 let Some(field_name) = &field.ident else {
@@ -65,6 +69,7 @@ pub fn polystruct(_attrs: &PolyAttr, item: &syn::ItemStruct) -> proc_macro2::Tok
                     .append_all(quote_spanned!( field_type.span() => #field_name: #export_type, ));
                 poly_fields.append_all(quote_spanned! { field_type.span() =>
                     ::polygen::items::StructField {
+                        visible: #field_vis,
                         name: stringify!(#field_name),
                         ty: ::polygen::items::FieldType::Typed(
                             &<#field_type as ::polygen::__private::ExportedPolyStruct>::STRUCT
