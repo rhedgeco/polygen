@@ -70,6 +70,7 @@ namespace SimpleLib
                 _data = newData;
             }
 
+            [StructLayout(LayoutKind.Sequential)]
             public struct Data
             {
                 internal uint item;
@@ -93,6 +94,7 @@ namespace SimpleLib
                     _data = newData;
                 }
 
+                [StructLayout(LayoutKind.Sequential)]
                 public struct Data
                 {
                     internal nuint ptr;

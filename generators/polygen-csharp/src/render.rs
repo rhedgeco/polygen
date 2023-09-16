@@ -64,6 +64,7 @@ impl CSharpRenderer {
                     _data = newData;
                 }}
 
+                [StructLayout(LayoutKind.Sequential)]
                 public struct Data
                 {{
                     {fields}
