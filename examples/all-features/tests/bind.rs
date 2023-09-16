@@ -34,7 +34,6 @@ fn bind() {
         CSharpRenderer {
             lib_name: "all_features".to_string(),
             namespace: "AllFeatures".to_string(),
-            class_name: "Native".to_string(),
         }
         .render(&bag),
     )

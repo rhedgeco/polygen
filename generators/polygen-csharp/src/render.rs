@@ -14,14 +14,12 @@ use polygen::{
 pub struct CSharpRenderer {
     pub lib_name: String,
     pub namespace: String,
-    pub class_name: String,
 }
 
 impl CSharpRenderer {
     pub fn render(&self, bag: &PolyBag) -> String {
-        let class_name = &self.class_name;
         let namespace = &self.namespace;
-        let items = indent_by(8, self.render_module_items(bag.root_module()));
+        let module = indent_by(4, self.render_module(bag.root_module()));
 
         formatdoc! {"
             using System;
@@ -29,10 +27,7 @@ impl CSharpRenderer {
             
             namespace {namespace}
             {{
-                public static class {class_name}
-                {{
-                    {items}
-                }}
+                {module}
             }}
             "
         }
